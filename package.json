@@ -1,0 +1,46 @@
+{
+  "name": "citrotech-partner-hub",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:seed": "npx tsx prisma/seed.ts",
+    "db:studio": "prisma studio",
+    "postinstall": "prisma generate"
+  },
+  "dependencies": {
+    "@clerk/nextjs": "^7.0.5",
+    "@prisma/client": "5.22.0",
+    "@tailwindcss/postcss": "^4.2.2",
+    "@tanstack/react-query": "^5.91.0",
+    "@vercel/blob": "^2.3.1",
+    "framer-motion": "^12.38.0",
+    "lucide-react": "^0.577.0",
+    "next": "^16.2.0",
+    "postcss": "^8.5.8",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "react-markdown": "^10.1.0",
+    "rehype-sanitize": "^6.0.0",
+    "resend": "^6.9.4",
+    "sonner": "^2.0.7",
+    "svix": "^1.88.0",
+    "tailwindcss": "^4.2.2",
+    "typescript": "^5.9.3",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "eslint": "^9.39.4",
+    "eslint-config-next": "^16.2.0",
+    "prisma": "5.22.0",
+    "tsx": "^4.21.0"
+  }
+}

@@ -1,0 +1,211 @@
+// ──────────────────────────────────────────────────────────────
+// CitroTech Partner Hub – Prisma Schema
+// ──────────────────────────────────────────────────────────────
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ───────────────────────────────────────────────────
+
+enum PartnerTier {
+  REGISTERED
+  CERTIFIED
+  PREMIER
+}
+
+enum PartnerStatus {
+  ACTIVE
+  SUSPENDED
+  INACTIVE
+}
+
+enum ProductType {
+  MFB_31
+  MFB_34
+}
+
+enum OrderStatus {
+  SUBMITTED
+  CONFIRMED
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum SenderType {
+  PARTNER
+  ADMIN
+}
+
+enum ConversationStatus {
+  OPEN
+  RESOLVED
+  ARCHIVED
+}
+
+enum AnnouncementType {
+  INFO
+  PRODUCT
+  TRAINING
+  URGENT
+}
+
+// ─── Models ──────────────────────────────────────────────────
+
+model Partner {
+  id                 String        @id @default(cuid())
+  clerkUserId        String        @unique
+  email              String        @unique
+  firstName          String
+  lastName           String
+  companyName        String
+  phone              String?
+  address            String?
+  city               String?
+  state              String?
+  zip                String?
+  contractorLicense  String?
+  insuranceExpiry    DateTime?
+  tier               PartnerTier   @default(CERTIFIED)
+  certifiedAt        DateTime?
+  certExpiresAt      DateTime?
+  certificationNotes String?
+  status             PartnerStatus @default(ACTIVE)
+
+  orders        Order[]
+  conversations Conversation[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model DocumentCategory {
+  id          String  @id @default(cuid())
+  name        String
+  slug        String  @unique
+  description String?
+  icon        String?
+  sortOrder   Int     @default(0)
+
+  documents Document[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Document {
+  id            String  @id @default(cuid())
+  title         String
+  description   String?
+  fileName      String
+  fileUrl       String
+  fileSize      Int
+  fileType      String
+  version       String?
+  isPublic      Boolean  @default(true)
+  isPinned      Boolean  @default(false)
+  tags          String[]
+  categoryId    String
+  downloadCount Int      @default(0)
+
+  category DocumentCategory @relation(fields: [categoryId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([categoryId])
+}
+
+model Order {
+  id                   String      @id @default(cuid())
+  orderNumber          String      @unique
+  partnerId            String
+  status               OrderStatus @default(SUBMITTED)
+  projectName          String?
+  projectAddress       String?
+  estimatedInstallDate DateTime?
+  partnerNotes         String?
+  adminNotes           String?
+  trackingNumber       String?
+  submittedAt          DateTime    @default(now())
+  confirmedAt          DateTime?
+  shippedAt            DateTime?
+  deliveredAt          DateTime?
+
+  partner Partner     @relation(fields: [partnerId], references: [id])
+  items   OrderItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([partnerId])
+  @@index([status])
+}
+
+model OrderItem {
+  id       String      @id @default(cuid())
+  orderId  String
+  product  ProductType
+  quantity Int
+  notes    String?
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+}
+
+model Conversation {
+  id            String             @id @default(cuid())
+  partnerId     String
+  subject       String?
+  status        ConversationStatus @default(OPEN)
+  lastMessageAt DateTime           @default(now())
+
+  partner  Partner   @relation(fields: [partnerId], references: [id])
+  messages Message[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([partnerId])
+  @@index([status])
+  @@index([lastMessageAt])
+}
+
+model Message {
+  id              String     @id @default(cuid())
+  conversationId  String
+  senderType      SenderType
+  senderName      String
+  senderClerkId   String?
+  body            String
+  isReadByPartner Boolean    @default(false)
+  isReadByAdmin   Boolean    @default(false)
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([conversationId])
+}
+
+model Announcement {
+  id          String           @id @default(cuid())
+  title       String
+  body        String
+  type        AnnouncementType @default(INFO)
+  isPinned    Boolean          @default(false)
+  authorName  String
+  publishedAt DateTime         @default(now())
+  expiresAt   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

@@ -1,0 +1,247 @@
+@import "tailwindcss";
+
+/* ============================================================
+   CitroTech Partner Hub - Global Styles
+   Tailwind CSS v4 with CSS Custom Properties
+   ============================================================ */
+
+/* ----------------------------------------------------------
+   Color Tokens: Light Mode (default)
+   ---------------------------------------------------------- */
+:root {
+  /* Brand */
+  --citro-orange: #F78E25;
+  --citro-orange-dark: #E8731A;
+  --citro-orange-light: #FEF3E2;
+
+  --forest-teal: #105D50;
+  --forest-teal-light: #14796A;
+  --forest-teal-muted: #E8F5F2;
+
+  --near-black: #0D0D0D;
+
+  /* Surface & Layout */
+  --background: #FAFAF8;
+  --card: #FFFFFF;
+  --border: #E8E8E3;
+  --secondary-bg: #F3F3F0;
+
+  /* Typography */
+  --text-primary: #1A1A1A;
+  --text-secondary: #6B6B63;
+  --text-muted: #9C9C93;
+
+  /* Semantic */
+  --success: #16A34A;
+  --warning: #EAB308;
+  --error: #DC2626;
+  --info: #2563EB;
+
+  /* Status */
+  --status-submitted: #2563EB;
+  --status-confirmed: #F78E25;
+  --status-processing: #EAB308;
+  --status-shipped: #105D50;
+  --status-delivered: #16A34A;
+  --status-cancelled: #DC2626;
+
+  /* Misc */
+  --radius-card: 12px;
+  --transition-theme: 200ms ease-in-out;
+}
+
+/* ----------------------------------------------------------
+   Color Tokens: Dark Mode
+   ---------------------------------------------------------- */
+[data-theme="dark"] {
+  --citro-orange-light: #2D1F0A;
+  --forest-teal-muted: #0D2D28;
+
+  --background: #0D0D0D;
+  --card: #1A1A1A;
+  --border: #2D2D2D;
+  --secondary-bg: #1A1A1A;
+
+  --text-primary: #F0F0EC;
+  --text-secondary: #9C9C93;
+  --text-muted: #6B6B63;
+}
+
+/* ----------------------------------------------------------
+   Tailwind v4 Theme Extension
+   Maps CSS custom properties into Tailwind utility classes.
+   Usage: bg-citro-orange, text-forest-teal, border-border, etc.
+   ---------------------------------------------------------- */
+@theme inline {
+  --color-citro-orange: var(--citro-orange);
+  --color-citro-orange-dark: var(--citro-orange-dark);
+  --color-citro-orange-light: var(--citro-orange-light);
+
+  --color-forest-teal: var(--forest-teal);
+  --color-forest-teal-light: var(--forest-teal-light);
+  --color-forest-teal-muted: var(--forest-teal-muted);
+
+  --color-near-black: var(--near-black);
+
+  --color-background: var(--background);
+  --color-card: var(--card);
+  --color-border: var(--border);
+  --color-secondary-bg: var(--secondary-bg);
+
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-error: var(--error);
+  --color-info: var(--info);
+
+  --color-status-submitted: var(--status-submitted);
+  --color-status-confirmed: var(--status-confirmed);
+  --color-status-processing: var(--status-processing);
+  --color-status-shipped: var(--status-shipped);
+  --color-status-delivered: var(--status-delivered);
+  --color-status-cancelled: var(--status-cancelled);
+
+  --radius-card: 12px;
+
+  --font-display: var(--font-instrument-sans);
+  --font-body: var(--font-dm-sans);
+  --font-mono: var(--font-jetbrains-mono);
+}
+
+/* ----------------------------------------------------------
+   Font Family Utility Classes
+   Applied via next/font CSS variable injection in layout.tsx
+   ---------------------------------------------------------- */
+.font-display {
+  font-family: var(--font-instrument-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+.font-body {
+  font-family: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+.font-mono {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+}
+
+/* ----------------------------------------------------------
+   Base / Reset Styles
+   ---------------------------------------------------------- */
+*,
+*::before,
+*::after {
+  border-color: var(--border);
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--text-primary);
+  font-family: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition:
+    background-color var(--transition-theme),
+    color var(--transition-theme);
+}
+
+/* ----------------------------------------------------------
+   Theme Transition Helpers
+   Smooth color transitions when toggling light/dark mode.
+   ---------------------------------------------------------- */
+[data-theme-transition] *,
+[data-theme-transition] *::before,
+[data-theme-transition] *::after {
+  transition:
+    background-color var(--transition-theme),
+    border-color var(--transition-theme),
+    color var(--transition-theme),
+    box-shadow var(--transition-theme) !important;
+}
+
+/* ----------------------------------------------------------
+   Card Component
+   ---------------------------------------------------------- */
+.card {
+  background-color: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  transition:
+    background-color var(--transition-theme),
+    border-color var(--transition-theme),
+    box-shadow var(--transition-theme);
+}
+
+.card:hover {
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.06);
+}
+
+[data-theme="dark"] .card:hover {
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.3);
+}
+
+/* ----------------------------------------------------------
+   Tap-Target Sizing (44px minimum for touch)
+   ---------------------------------------------------------- */
+button,
+a,
+[role="button"],
+input[type="submit"],
+input[type="button"],
+input[type="reset"] {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Allow inline links to remain inline-sized */
+p a,
+li a,
+span a {
+  min-height: unset;
+  min-width: unset;
+}
+
+/* ----------------------------------------------------------
+   Focus Visible
+   ---------------------------------------------------------- */
+:focus-visible {
+  outline: 2px solid var(--citro-orange);
+  outline-offset: 2px;
+}
+
+/* ----------------------------------------------------------
+   Selection
+   ---------------------------------------------------------- */
+::selection {
+  background-color: var(--citro-orange);
+  color: #ffffff;
+}
+
+/* ----------------------------------------------------------
+   Scrollbar (subtle, themed)
+   ---------------------------------------------------------- */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--text-muted);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
