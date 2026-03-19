@@ -157,10 +157,11 @@ export function MobileNav({ role, unreadCount = 0 }: MobileNavProps) {
     <div className="lg:hidden">
       {/* ---- Top bar ---- */}
       <header className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between h-14 px-4 bg-[#0D0D0D] border-b border-white/[0.06]">
-        <span className="text-lg font-bold font-display tracking-tight">
-          <span className="text-citro-orange">Citro</span>
-          <span className="text-white">Tech</span>
-        </span>
+        <img
+          src="/logo.png"
+          alt="CitroTech"
+          className="h-6 w-auto object-contain"
+        />
 
         <button
           onClick={() => setDrawerOpen(true)}
@@ -197,10 +198,11 @@ export function MobileNav({ role, unreadCount = 0 }: MobileNavProps) {
             >
               {/* Drawer header */}
               <div className="flex items-center justify-between h-14 px-5 border-b border-white/[0.06] shrink-0">
-                <span className="text-lg font-bold font-display tracking-tight">
-                  <span className="text-citro-orange">Citro</span>
-                  <span className="text-white">Tech</span>
-                </span>
+                <img
+                  src="/logo.png"
+                  alt="CitroTech"
+                  className="h-6 w-auto object-contain"
+                />
                 <button
                   onClick={closeDrawer}
                   className="flex items-center justify-center h-9 w-9 rounded-lg text-gray-400 hover:text-white hover:bg-white/[0.06] transition-colors duration-150"

@@ -236,14 +236,17 @@ export function Sidebar({ role, unreadCount = 0 }: SidebarProps) {
           )}
         >
           {collapsed ? (
-            <span className="text-lg font-bold font-display text-citro-orange">
-              C
-            </span>
+            <img
+              src="/logo.png"
+              alt="CitroTech"
+              className="h-7 w-auto object-contain"
+            />
           ) : (
-            <span className="text-lg font-bold font-display tracking-tight">
-              <span className="text-citro-orange">Citro</span>
-              <span className="text-white">Tech</span>
-            </span>
+            <img
+              src="/logo.png"
+              alt="CitroTech"
+              className="h-7 w-auto object-contain"
+            />
           )}
         </div>
 

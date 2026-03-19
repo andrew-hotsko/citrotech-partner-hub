@@ -90,8 +90,10 @@ export async function POST(req: NextRequest) {
     });
   } catch (error) {
     console.error("[UPLOAD_POST]", error);
+    const message =
+      error instanceof Error ? error.message : "Unknown server error";
     return NextResponse.json(
-      { error: "Failed to upload file" },
+      { error: `Failed to upload file: ${message}` },
       { status: 500 },
     );
   }
