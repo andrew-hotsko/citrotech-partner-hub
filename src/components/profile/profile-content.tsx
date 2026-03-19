@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Shield, Pencil, Save, X, Loader2 } from "lucide-react";
+import { Shield, Pencil, Save, X, Loader2, Warehouse } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/layout/page-header";
 import {
@@ -14,6 +14,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -35,6 +36,7 @@ interface PartnerProfile {
   state: string | null;
   zip: string | null;
   contractorLicense: string | null;
+  warehouseAddress: string | null;
   tier: PartnerTier;
   certifiedAt: string | null;
   certExpiresAt: string | null;
@@ -56,6 +58,7 @@ interface EditableFields {
   state: string;
   zip: string;
   contractorLicense: string;
+  warehouseAddress: string;
 }
 
 function getEditableDefaults(partner: PartnerProfile): EditableFields {
@@ -66,6 +69,7 @@ function getEditableDefaults(partner: PartnerProfile): EditableFields {
     state: partner.state ?? "",
     zip: partner.zip ?? "",
     contractorLicense: partner.contractorLicense ?? "",
+    warehouseAddress: partner.warehouseAddress ?? "",
   };
 }
 
@@ -233,6 +237,7 @@ export function ProfileContent({ partner }: ProfileContentProps) {
           state: fields.state,
           zip: fields.zip,
           contractorLicense: fields.contractorLicense,
+          warehouseAddress: fields.warehouseAddress,
         }),
       });
 
@@ -252,6 +257,7 @@ export function ProfileContent({ partner }: ProfileContentProps) {
         state: updated.state,
         zip: updated.zip,
         contractorLicense: updated.contractorLicense,
+        warehouseAddress: updated.warehouseAddress,
       }));
 
       setIsEditing(false);
@@ -402,9 +408,65 @@ export function ProfileContent({ partner }: ProfileContentProps) {
         </Card>
       </motion.div>
 
-      {/* Certification card */}
+      {/* Warehouse / Default Shipping Address card */}
       <motion.div
         custom={1}
+        variants={fadeIn}
+        initial="hidden"
+        animate="visible"
+      >
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Warehouse
+                className="h-5 w-5 text-text-muted"
+                aria-hidden="true"
+              />
+              <CardTitle>Warehouse / Default Shipping Address</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {isEditing ? (
+              <div className="space-y-2">
+                <Label className="text-xs font-medium text-text-muted uppercase tracking-wider">
+                  Warehouse Address
+                </Label>
+                <Textarea
+                  value={fields.warehouseAddress}
+                  onChange={(e) => updateField("warehouseAddress", e.target.value)}
+                  placeholder="Enter your full warehouse or default shipping address..."
+                  rows={3}
+                />
+                <p className="text-xs text-text-muted leading-relaxed">
+                  This address will be used as the default shipping destination for your orders. You can override it per order.
+                </p>
+              </div>
+            ) : (
+              <dl>
+                <div className="space-y-1">
+                  <dt className="text-xs font-medium text-text-muted uppercase tracking-wider">
+                    Warehouse Address
+                  </dt>
+                  <dd className="text-sm text-text-primary whitespace-pre-wrap">
+                    {currentPartner.warehouseAddress || (
+                      <span className="text-text-muted italic">
+                        Not provided &mdash; set up your warehouse address to speed up order checkout.
+                      </span>
+                    )}
+                  </dd>
+                  <p className="text-xs text-text-muted leading-relaxed pt-1">
+                    This address will be used as the default shipping destination for your orders. You can override it per order.
+                  </p>
+                </div>
+              </dl>
+            )}
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      {/* Certification card */}
+      <motion.div
+        custom={2}
         variants={fadeIn}
         initial="hidden"
         animate="visible"

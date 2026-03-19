@@ -56,6 +56,7 @@ interface Order {
 
 interface OrdersListProps {
   orders: Order[];
+  warehouseAddress?: string;
 }
 
 /* ------------------------------------------------------------------ */
@@ -227,7 +228,7 @@ function CopyOrderNumber({ orderNumber }: { orderNumber: string }) {
 /*  Component                                                          */
 /* ------------------------------------------------------------------ */
 
-export function OrdersList({ orders }: OrdersListProps) {
+export function OrdersList({ orders, warehouseAddress }: OrdersListProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -340,6 +341,7 @@ export function OrdersList({ orders }: OrdersListProps) {
             setDialogOpen(open);
             if (!open) setPrefill(undefined);
           }}
+          warehouseAddress={warehouseAddress}
           prefill={prefill}
         />
 

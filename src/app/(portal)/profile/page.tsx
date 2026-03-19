@@ -17,6 +17,7 @@ export default async function ProfilePage() {
         state: partner.state,
         zip: partner.zip,
         contractorLicense: partner.contractorLicense,
+        warehouseAddress: partner.warehouseAddress,
         tier: partner.tier,
         certifiedAt: partner.certifiedAt?.toISOString() ?? null,
         certExpiresAt: partner.certExpiresAt?.toISOString() ?? null,

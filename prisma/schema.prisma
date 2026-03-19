@@ -85,6 +85,7 @@ model Partner {
   certExpiresAt      DateTime?
   certificationNotes String?
   status             PartnerStatus @default(ACTIVE)
+  warehouseAddress   String?
 
   orders        Order[]
   conversations Conversation[]

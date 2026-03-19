@@ -68,6 +68,11 @@ const updateProfileSchema = z.object({
     .max(100, "License number is too long")
     .optional()
     .nullable(),
+  warehouseAddress: z
+    .string()
+    .max(500, "Warehouse address is too long")
+    .optional()
+    .nullable(),
 });
 
 export async function PATCH(req: NextRequest) {
@@ -104,6 +109,7 @@ export async function PATCH(req: NextRequest) {
       "state",
       "zip",
       "contractorLicense",
+      "warehouseAddress",
     ] as const;
 
     for (const field of allowedFields) {

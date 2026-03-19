@@ -15,6 +15,7 @@ export default async function OrdersPage() {
   return (
     <Suspense>
       <OrdersList
+        warehouseAddress={partner.warehouseAddress ?? undefined}
         orders={orders.map((order: typeof orders[number]) => ({
           id: order.id,
           orderNumber: order.orderNumber,

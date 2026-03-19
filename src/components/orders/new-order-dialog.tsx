@@ -46,6 +46,7 @@ import {
 interface NewOrderDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  warehouseAddress?: string;
   prefill?: {
     mfb31Qty?: number;
     mfb34Qty?: number;
@@ -53,6 +54,8 @@ interface NewOrderDialogProps {
     projectAddress?: string;
   };
 }
+
+type ShippingOption = "warehouse" | "project" | "custom";
 
 interface ProductSelection {
   selected: boolean;
@@ -180,6 +183,7 @@ const stepVariants = {
 export function NewOrderDialog({
   open,
   onOpenChange,
+  warehouseAddress,
   prefill,
 }: NewOrderDialogProps) {
   const router = useRouter();
@@ -214,8 +218,10 @@ export function NewOrderDialog({
   const [partnerNotes, setPartnerNotes] = useState("");
 
   // Shipping address
-  const [shipToProjectAddress, setShipToProjectAddress] = useState(true);
-  const [separateShippingAddress, setSeparateShippingAddress] = useState("");
+  const [shippingOption, setShippingOption] = useState<ShippingOption>(
+    warehouseAddress ? "warehouse" : "project"
+  );
+  const [customShippingAddress, setCustomShippingAddress] = useState("");
 
   // Validation
   const [dateError, setDateError] = useState<string | null>(null);
@@ -240,9 +246,12 @@ export function NewOrderDialog({
   }, [products]);
 
   // Resolved shipping address
-  const resolvedShippingAddress = shipToProjectAddress
-    ? projectAddress
-    : separateShippingAddress;
+  const resolvedShippingAddress =
+    shippingOption === "warehouse"
+      ? warehouseAddress || ""
+      : shippingOption === "project"
+      ? projectAddress
+      : customShippingAddress;
 
   const resetForm = useCallback(() => {
     setStep(0);
@@ -255,8 +264,8 @@ export function NewOrderDialog({
     setProjectAddress("");
     setEstimatedInstallDate("");
     setPartnerNotes("");
-    setShipToProjectAddress(true);
-    setSeparateShippingAddress("");
+    setShippingOption(warehouseAddress ? "warehouse" : "project");
+    setCustomShippingAddress("");
     setDateError(null);
   }, []);
 
@@ -318,9 +327,12 @@ export function NewOrderDialog({
     if (items.length === 0) return;
 
     // Determine the shipping address to send
-    const shippingAddress = shipToProjectAddress
-      ? projectAddress || undefined
-      : separateShippingAddress || undefined;
+    const shippingAddress =
+      shippingOption === "warehouse"
+        ? warehouseAddress || undefined
+        : shippingOption === "project"
+        ? projectAddress || undefined
+        : customShippingAddress || undefined;
 
     setSubmitting(true);
     try {
@@ -362,8 +374,9 @@ export function NewOrderDialog({
     projectAddress,
     estimatedInstallDate,
     partnerNotes,
-    shipToProjectAddress,
-    separateShippingAddress,
+    shippingOption,
+    warehouseAddress,
+    customShippingAddress,
     onOpenChange,
     resetForm,
     router,
@@ -696,22 +709,67 @@ export function NewOrderDialog({
                     Shipping Address
                   </h3>
 
-                  <label className="flex items-center gap-2.5 cursor-pointer group">
-                    <input
-                      type="checkbox"
-                      checked={shipToProjectAddress}
-                      onChange={(e) =>
-                        setShipToProjectAddress(e.target.checked)
-                      }
-                      className="h-4 w-4 rounded border-border text-citro-orange focus:ring-citro-orange/30 accent-[var(--citro-orange)] cursor-pointer"
-                    />
-                    <span className="text-sm text-text-secondary group-hover:text-text-primary transition-colors">
-                      Ship to project address
-                    </span>
-                  </label>
+                  <div className="space-y-2">
+                    {/* Option 1: Warehouse (only if warehouse address exists) */}
+                    {warehouseAddress && (
+                      <label className="flex items-start gap-2.5 cursor-pointer group rounded-lg border border-border p-3 hover:border-citro-orange/30 transition-colors has-[:checked]:border-citro-orange has-[:checked]:bg-citro-orange/[0.03]">
+                        <input
+                          type="radio"
+                          name="shipping-option"
+                          checked={shippingOption === "warehouse"}
+                          onChange={() => setShippingOption("warehouse")}
+                          className="mt-0.5 h-4 w-4 border-border text-citro-orange focus:ring-citro-orange/30 accent-[var(--citro-orange)] cursor-pointer"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <span className="text-sm font-medium text-text-primary group-hover:text-text-primary transition-colors">
+                            Ship to my warehouse
+                          </span>
+                          <p className="text-xs text-text-muted mt-1 whitespace-pre-wrap">
+                            {warehouseAddress}
+                          </p>
+                        </div>
+                      </label>
+                    )}
+
+                    {/* Option 2: Project address */}
+                    <label className="flex items-start gap-2.5 cursor-pointer group rounded-lg border border-border p-3 hover:border-citro-orange/30 transition-colors has-[:checked]:border-citro-orange has-[:checked]:bg-citro-orange/[0.03]">
+                      <input
+                        type="radio"
+                        name="shipping-option"
+                        checked={shippingOption === "project"}
+                        onChange={() => setShippingOption("project")}
+                        className="mt-0.5 h-4 w-4 border-border text-citro-orange focus:ring-citro-orange/30 accent-[var(--citro-orange)] cursor-pointer"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <span className="text-sm font-medium text-text-primary group-hover:text-text-primary transition-colors">
+                          Ship to project address
+                        </span>
+                        {shippingOption === "project" && !projectAddress && (
+                          <p className="text-[10px] text-text-muted mt-1 flex items-center gap-1">
+                            <Info className="h-3 w-3 shrink-0" />
+                            Enter a project address above to use this option.
+                          </p>
+                        )}
+                      </div>
+                    </label>
+
+                    {/* Option 3: Custom address */}
+                    <label className="flex items-start gap-2.5 cursor-pointer group rounded-lg border border-border p-3 hover:border-citro-orange/30 transition-colors has-[:checked]:border-citro-orange has-[:checked]:bg-citro-orange/[0.03]">
+                      <input
+                        type="radio"
+                        name="shipping-option"
+                        checked={shippingOption === "custom"}
+                        onChange={() => setShippingOption("custom")}
+                        className="mt-0.5 h-4 w-4 border-border text-citro-orange focus:ring-citro-orange/30 accent-[var(--citro-orange)] cursor-pointer"
+                      />
+                      <span className="text-sm font-medium text-text-primary group-hover:text-text-primary transition-colors">
+                        Ship to a different address
+                      </span>
+                    </label>
+                  </div>
 
                   <AnimatePresence>
-                    {!shipToProjectAddress && (
+                    {shippingOption === "custom" && (
                       <motion.div
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: "auto" }}
@@ -724,14 +782,14 @@ export function NewOrderDialog({
                             htmlFor="new-order-shipping-address"
                             className="text-xs text-text-secondary"
                           >
-                            Separate Shipping Address
+                            Custom Shipping Address
                           </Label>
                           <Textarea
                             id="new-order-shipping-address"
                             placeholder="Enter the full shipping address..."
-                            value={separateShippingAddress}
+                            value={customShippingAddress}
                             onChange={(e) =>
-                              setSeparateShippingAddress(e.target.value)
+                              setCustomShippingAddress(e.target.value)
                             }
                             rows={2}
                           />
@@ -740,11 +798,10 @@ export function NewOrderDialog({
                     )}
                   </AnimatePresence>
 
-                  {shipToProjectAddress && !projectAddress && (
+                  {!warehouseAddress && (
                     <p className="text-[10px] text-text-muted flex items-center gap-1">
                       <Info className="h-3 w-3 shrink-0" />
-                      Enter a project address above or uncheck to provide a
-                      separate shipping address.
+                      Set up your warehouse address in your Profile for faster checkout.
                     </p>
                   )}
                 </div>
@@ -948,11 +1005,13 @@ export function NewOrderDialog({
                         {resolvedShippingAddress ? (
                           <p className="text-sm text-text-primary">
                             {resolvedShippingAddress}
-                            {shipToProjectAddress && (
-                              <span className="text-[10px] text-text-muted ml-1.5">
-                                (same as project)
-                              </span>
-                            )}
+                            <span className="text-[10px] text-text-muted ml-1.5">
+                              {shippingOption === "warehouse"
+                                ? "(warehouse)"
+                                : shippingOption === "project"
+                                ? "(same as project)"
+                                : "(custom address)"}
+                            </span>
                           </p>
                         ) : (
                           <p className="text-sm text-text-muted italic">
