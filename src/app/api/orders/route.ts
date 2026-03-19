@@ -79,17 +79,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const role = await getRole();
-    if (role !== "partner") {
-      return NextResponse.json(
-        { error: "Only partners can create orders" },
-        { status: 403 },
-      );
-    }
-
+    // Partners (and admins who also have a Partner record) can create orders
     const partner = await getPartnerByClerkId(user.id);
     if (!partner) {
-      return NextResponse.json({ error: "Partner not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Partner profile not found. Please contact an administrator." },
+        { status: 404 },
+      );
     }
 
     const body = await req.json();

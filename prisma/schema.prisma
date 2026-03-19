@@ -86,6 +86,10 @@ model Partner {
   certificationNotes String?
   status             PartnerStatus @default(ACTIVE)
   warehouseAddress   String?
+  warehouseCity      String?
+  warehouseState     String?
+  warehouseZip       String?
+  warehouseSameAsBusiness Boolean @default(false)
 
   orders        Order[]
   conversations Conversation[]

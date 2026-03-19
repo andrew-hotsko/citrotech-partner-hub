@@ -73,6 +73,24 @@ const updateProfileSchema = z.object({
     .max(500, "Warehouse address is too long")
     .optional()
     .nullable(),
+  warehouseCity: z
+    .string()
+    .max(100, "City name is too long")
+    .optional()
+    .nullable(),
+  warehouseState: z
+    .string()
+    .max(50, "State name is too long")
+    .optional()
+    .nullable(),
+  warehouseZip: z
+    .string()
+    .max(20, "ZIP code is too long")
+    .optional()
+    .nullable(),
+  warehouseSameAsBusiness: z
+    .boolean()
+    .optional(),
 });
 
 export async function PATCH(req: NextRequest) {
@@ -101,7 +119,7 @@ export async function PATCH(req: NextRequest) {
     }
 
     // Build update data — only include fields that were actually sent
-    const updateData: Record<string, string | null> = {};
+    const updateData: Record<string, string | boolean | null> = {};
     const allowedFields = [
       "phone",
       "address",
@@ -110,13 +128,32 @@ export async function PATCH(req: NextRequest) {
       "zip",
       "contractorLicense",
       "warehouseAddress",
+      "warehouseCity",
+      "warehouseState",
+      "warehouseZip",
+      "warehouseSameAsBusiness",
     ] as const;
 
     for (const field of allowedFields) {
       if (field in body) {
         const value = parsed.data[field];
-        // Normalize empty strings to null
-        updateData[field] = value?.trim() || null;
+        if (typeof value === "boolean") {
+          updateData[field] = value;
+        } else {
+          // Normalize empty strings to null
+          updateData[field] = value?.trim() || null;
+        }
+      }
+    }
+
+    // If "same as business" is toggled on, copy business address to warehouse
+    if (parsed.data.warehouseSameAsBusiness === true) {
+      const current = await db.partner.findUnique({ where: { id: partner.id } });
+      if (current) {
+        updateData.warehouseAddress = current.address;
+        updateData.warehouseCity = current.city;
+        updateData.warehouseState = current.state;
+        updateData.warehouseZip = current.zip;
       }
     }
 
