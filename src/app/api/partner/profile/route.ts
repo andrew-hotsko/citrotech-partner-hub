@@ -26,8 +26,10 @@ export async function GET() {
     return NextResponse.json(partner);
   } catch (error) {
     console.error("[PARTNER_PROFILE_GET]", error);
+    const message =
+      error instanceof Error ? error.message : "Unknown server error";
     return NextResponse.json(
-      { error: "Failed to fetch profile" },
+      { error: `Failed to fetch profile: ${message}` },
       { status: 500 },
     );
   }
@@ -172,8 +174,10 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json(updatedPartner);
   } catch (error) {
     console.error("[PARTNER_PROFILE_PATCH]", error);
+    const message =
+      error instanceof Error ? error.message : "Unknown server error";
     return NextResponse.json(
-      { error: "Failed to update profile" },
+      { error: `Failed to update profile: ${message}` },
       { status: 500 },
     );
   }
