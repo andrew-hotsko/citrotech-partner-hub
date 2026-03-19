@@ -123,11 +123,11 @@ export function DocumentCard({ document: doc }: DocumentCardProps) {
     <Card className="h-full flex flex-col hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group">
       <CardContent className="p-5 flex flex-col flex-1">
         {/* Main content row: icon | text | download */}
-        <div className="flex items-start gap-4">
+        <div className="flex gap-4">
           {/* Large file type icon in colored circle */}
           <div
             className={cn(
-              "shrink-0 rounded-full p-3 ring-1 ring-current/10 transition-transform duration-200 group-hover:scale-110",
+              "shrink-0 self-start mt-0.5 rounded-full p-3 ring-1 ring-current/10 transition-transform duration-200 group-hover:scale-110",
               getFileTypeBadgeClass(fileTypeLabel)
             )}
           >
@@ -173,7 +173,7 @@ export function DocumentCard({ document: doc }: DocumentCardProps) {
           </div>
 
           {/* Download button -- desktop visible */}
-          <div className="shrink-0 hidden sm:block">
+          <div className="shrink-0 hidden sm:flex sm:items-start sm:pt-0.5">
             <Button
               size="sm"
               variant="default"
@@ -201,17 +201,17 @@ export function DocumentCard({ document: doc }: DocumentCardProps) {
 
         {/* Bottom row: meta + mobile download */}
         <div className="flex items-center justify-between pt-3 border-t border-border mt-4">
-          <div className="flex items-center gap-3 text-xs text-text-muted">
+          <div className="flex items-center gap-3 text-xs text-text-muted flex-wrap">
             <span>{formatFileSize(doc.fileSize)}</span>
-            <span className="flex items-center gap-1">
-              <Calendar className="h-3 w-3" />
+            <span className="inline-flex items-center gap-1">
+              <Calendar className="h-3 w-3 shrink-0" />
               {formatDate(doc.createdAt)}
             </span>
             <span
-              className="flex items-center gap-1"
+              className="inline-flex items-center gap-1"
               title={`Downloaded ${doc.downloadCount} ${doc.downloadCount === 1 ? "time" : "times"}`}
             >
-              <Download className="h-3 w-3" />
+              <Download className="h-3 w-3 shrink-0" />
               {doc.downloadCount}
             </span>
           </div>

@@ -287,24 +287,26 @@ function AnnouncementCard({
         style={{ borderLeftColor: borderColorMap[announcement.type] }}
       >
         <CardHeader className="pb-2">
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge className={cn("text-xs", badgeClassMap[announcement.type])}>
-              {announcement.type}
-            </Badge>
-            {announcement.isPinned && (
-              <Badge variant="outline" className="gap-1">
-                <Pin className="h-3 w-3" aria-hidden="true" />
-                Pinned
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap flex-1 min-w-0">
+              <Badge className={cn("text-xs", badgeClassMap[announcement.type])}>
+                {announcement.type}
               </Badge>
-            )}
-            {isRecent && (
-              <Badge variant="outline" className="gap-1 border-green-500/30 text-green-600 text-[10px]">
-                New
-              </Badge>
-            )}
+              {announcement.isPinned && (
+                <Badge variant="outline" className="gap-1">
+                  <Pin className="h-3 w-3" aria-hidden="true" />
+                  Pinned
+                </Badge>
+              )}
+              {isRecent && (
+                <Badge variant="outline" className="gap-1 border-green-500/30 text-green-600 text-[10px]">
+                  New
+                </Badge>
+              )}
+            </div>
             {/* Prominent date */}
-            <span className="ml-auto flex items-center gap-1.5 text-xs text-text-muted">
-              <Calendar className="h-3.5 w-3.5" aria-hidden="true" />
+            <span className="flex items-center gap-1.5 text-xs text-text-muted shrink-0">
+              <Calendar className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
               <time
                 dateTime={announcement.publishedAt}
                 title={formatDate(announcement.publishedAt)}

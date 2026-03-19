@@ -139,14 +139,14 @@ export function SupportContent() {
       >
         <Card className="border-l-4" style={{ borderLeftColor: "#DC2626" }}>
           <CardHeader>
-            <div className="flex items-start gap-3">
+            <div className="flex items-center gap-3">
               <div className="rounded-full bg-red-500/10 p-2.5 shrink-0">
                 <AlertTriangle
                   className="h-5 w-5 text-red-600"
                   aria-hidden="true"
                 />
               </div>
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <CardTitle className="text-red-600">
                   Emergency Fire Defense Hotline
                 </CardTitle>
@@ -286,7 +286,7 @@ export function SupportContent() {
                 animate="visible"
               >
                 <Card className="h-full">
-                  <CardHeader>
+                  <CardHeader className="gap-2">
                     <div
                       className={cn(
                         "rounded-full p-2.5 w-fit",
@@ -305,21 +305,21 @@ export function SupportContent() {
                     <p className="text-sm text-text-muted">
                       {contact.description}
                     </p>
-                    <div className="flex flex-col gap-1.5">
+                    <div className="flex flex-col gap-2">
                       <a
                         href={`mailto:${contact.email}`}
                         className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-citro-orange transition-colors"
                       >
                         <Mail className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                        {contact.email}
+                        <span className="truncate">{contact.email}</span>
                       </a>
                       <Link
                         href={`/messages?subject=Question%20for%20${encodeURIComponent(contact.name)}`}
                         className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-citro-orange transition-colors"
                       >
                         <MessageSquare className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                        Send a message
-                        <ExternalLink className="h-3 w-3" aria-hidden="true" />
+                        <span>Send a message</span>
+                        <ExternalLink className="h-3 w-3 shrink-0" aria-hidden="true" />
                       </Link>
                     </div>
                   </CardContent>
@@ -341,7 +341,7 @@ export function SupportContent() {
           <CardHeader>
             <div className="flex items-center gap-2">
               <HelpCircle
-                className="h-5 w-5 text-text-muted"
+                className="h-5 w-5 text-text-muted shrink-0"
                 aria-hidden="true"
               />
               <CardTitle>Frequently Asked Questions</CardTitle>

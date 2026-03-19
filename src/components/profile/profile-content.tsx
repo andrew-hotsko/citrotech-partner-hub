@@ -664,10 +664,10 @@ export function ProfileContent({ partner }: ProfileContentProps) {
       >
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2 min-w-0">
                 <Warehouse
-                  className="h-5 w-5 text-text-muted"
+                  className="h-5 w-5 text-text-muted shrink-0"
                   aria-hidden="true"
                 />
                 <CardTitle>Warehouse / Default Shipping Address</CardTitle>
@@ -809,7 +809,7 @@ export function ProfileContent({ partner }: ProfileContentProps) {
           <CardHeader>
             <div className="flex items-center gap-2">
               <Wrench
-                className="h-5 w-5 text-text-muted"
+                className="h-5 w-5 text-text-muted shrink-0"
                 aria-hidden="true"
               />
               <CardTitle>Business Details</CardTitle>
@@ -984,7 +984,7 @@ export function ProfileContent({ partner }: ProfileContentProps) {
           <CardHeader>
             <div className="flex items-center gap-2">
               <FileText
-                className="h-5 w-5 text-text-muted"
+                className="h-5 w-5 text-text-muted shrink-0"
                 aria-hidden="true"
               />
               <CardTitle>Insurance &amp; Compliance</CardTitle>
@@ -1113,7 +1113,7 @@ export function ProfileContent({ partner }: ProfileContentProps) {
           <CardHeader>
             <div className="flex items-center gap-2">
               <Shield
-                className="h-5 w-5 text-text-muted"
+                className="h-5 w-5 text-text-muted shrink-0"
                 aria-hidden="true"
               />
               <CardTitle>Password &amp; Security</CardTitle>

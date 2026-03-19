@@ -140,7 +140,7 @@ export default async function LibraryPage() {
                 >
                   <Card className="h-full hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 border-citro-orange/20 bg-citro-orange/[0.03]">
                     <CardContent className="p-4">
-                      <div className="flex items-start gap-3">
+                      <div className="flex items-center gap-3">
                         <div className="shrink-0 rounded-full bg-citro-orange/15 p-2 ring-1 ring-citro-orange/20">
                           <FileText className="h-4 w-4 text-citro-orange" />
                         </div>
@@ -187,14 +187,14 @@ export default async function LibraryPage() {
                   <Link key={category.id} href={`/library/${category.slug}`}>
                     <Card className="h-full hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer group">
                       <CardContent className="p-5">
-                        <div className="flex items-start gap-4">
+                        <div className="flex gap-4">
                           <div
-                            className={`shrink-0 rounded-full p-3 ring-1 transition-all duration-200 group-hover:scale-110 ${colors.bg} ${colors.ring}`}
+                            className={`shrink-0 self-start mt-0.5 rounded-full p-3 ring-1 transition-all duration-200 group-hover:scale-110 ${colors.bg} ${colors.ring}`}
                           >
                             <Icon className={`h-5 w-5 ${colors.text}`} />
                           </div>
                           <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-wrap">
                               <h3 className="text-sm font-semibold text-text-primary font-display group-hover:text-citro-orange transition-colors">
                                 {category.name}
                               </h3>

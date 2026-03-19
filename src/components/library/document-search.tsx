@@ -77,8 +77,8 @@ export function DocumentSearch({ documents, categoryName }: DocumentSearchProps)
         >
           Library
         </Link>
-        <ChevronRight className="h-4 w-4 text-text-muted" />
-        <span className="text-text-primary font-medium">{categoryName}</span>
+        <ChevronRight className="h-4 w-4 text-text-muted shrink-0" />
+        <span className="text-text-primary font-medium truncate">{categoryName}</span>
       </nav>
 
       {/* Back link + search row */}

@@ -548,7 +548,7 @@ export function ConversationList({
                 <Link href={`/messages/${conversation.id}`}>
                   <Card className="hover:shadow-md transition-shadow cursor-pointer group">
                     <CardContent className="p-4 sm:p-5">
-                      <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center justify-between gap-3">
                         <div className="min-w-0 flex-1 space-y-1">
                           <div className="flex items-center gap-2">
                             {conversation.unreadCount > 0 && (
@@ -590,7 +590,7 @@ export function ConversationList({
                           <span className="text-xs text-text-muted whitespace-nowrap">
                             {formatRelativeTime(conversation.lastMessageAt)}
                           </span>
-                          <ChevronRight className="h-4 w-4 text-text-muted group-hover:text-text-secondary transition-colors" />
+                          <ChevronRight className="h-4 w-4 text-text-muted group-hover:text-text-secondary transition-colors shrink-0" />
                         </div>
                       </div>
                     </CardContent>

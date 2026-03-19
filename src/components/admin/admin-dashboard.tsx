@@ -164,7 +164,7 @@ function QuickAction({
         whileHover={{ y: -2 }}
         transition={{ duration: 0.2, ease: "easeOut" }}
       >
-        <Card className="hover:shadow-md transition-shadow duration-300 cursor-pointer h-full border border-border/50 hover:border-border">
+        <Card className="hover:shadow-md transition-shadow duration-300 cursor-pointer h-full border border-border/50 hover:border-border group">
           <CardContent className="p-4 flex items-center gap-3">
             <div
               className={cn(
@@ -177,7 +177,7 @@ function QuickAction({
             <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold text-text-primary">{title}</p>
             </div>
-            <ChevronRight className="h-4 w-4 text-text-muted opacity-0 group-hover:opacity-100 transition-opacity" />
+            <ChevronRight className="h-4 w-4 text-text-muted opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
           </CardContent>
         </Card>
       </motion.div>
@@ -327,7 +327,7 @@ export function AdminDashboard({
                       <Link
                         key={order.id}
                         href={`/admin/orders/${order.id}`}
-                        className="flex items-center justify-between p-3 rounded-lg hover:bg-secondary-bg transition-colors group"
+                        className="flex items-center justify-between gap-3 p-3 rounded-lg hover:bg-secondary-bg transition-colors group"
                       >
                         <div className="min-w-0 flex-1 space-y-0.5">
                           <div className="flex items-center gap-2 flex-wrap">
@@ -348,11 +348,11 @@ export function AdminDashboard({
                           </p>
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
-                          <span className="text-xs text-text-muted flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
+                          <span className="text-xs text-text-muted inline-flex items-center gap-1">
+                            <Clock className="h-3 w-3 shrink-0" />
                             {formatDate(order.createdAt)}
                           </span>
-                          <ChevronRight className="h-4 w-4 text-text-muted opacity-0 group-hover:opacity-100 transition-opacity" />
+                          <ChevronRight className="h-4 w-4 text-text-muted opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
                         </div>
                       </Link>
                     ))}
@@ -402,7 +402,7 @@ export function AdminDashboard({
                         <Link
                           key={conv.id}
                           href={`/admin/messages/${conv.id}`}
-                          className="flex items-center justify-between p-3 rounded-lg hover:bg-secondary-bg transition-colors group"
+                          className="flex items-center justify-between gap-3 p-3 rounded-lg hover:bg-secondary-bg transition-colors group"
                         >
                           <div className="min-w-0 flex-1 space-y-0.5">
                             <p className="text-sm font-medium text-text-primary truncate">
@@ -420,10 +420,10 @@ export function AdminDashboard({
                             </p>
                           </div>
                           <div className="flex items-center gap-2 shrink-0">
-                            <span className="text-xs text-text-muted">
+                            <span className="text-xs text-text-muted whitespace-nowrap">
                               {formatRelativeTime(conv.lastMessageAt)}
                             </span>
-                            <ChevronRight className="h-4 w-4 text-text-muted opacity-0 group-hover:opacity-100 transition-opacity" />
+                            <ChevronRight className="h-4 w-4 text-text-muted opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
                           </div>
                         </Link>
                       );

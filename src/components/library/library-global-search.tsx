@@ -116,7 +116,7 @@ export function LibraryGlobalSearch({ documents }: LibraryGlobalSearchProps) {
   return (
     <div ref={containerRef} className="relative max-w-2xl">
       <div className="relative">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-text-muted pointer-events-none" />
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-text-muted pointer-events-none" />
         <Input
           ref={inputRef}
           value={query}
@@ -165,7 +165,7 @@ export function LibraryGlobalSearch({ documents }: LibraryGlobalSearchProps) {
                           <Link
                             href={`/library/${doc.category.slug}`}
                             onClick={() => setIsFocused(false)}
-                            className="flex items-center gap-3 px-4 py-3 hover:bg-secondary-bg transition-colors group"
+                            className="flex items-center gap-3 px-4 py-3 hover:bg-secondary-bg transition-colors group min-h-[44px]"
                           >
                             <div
                               className={cn(

@@ -385,11 +385,11 @@ export function OrderDetail({ order, onReorder }: OrderDetailProps) {
           >
             <Card className="border-[var(--status-cancelled)]/30 bg-[var(--status-cancelled)]/[0.03]">
               <CardContent className="p-5">
-                <div className="flex items-start gap-3">
-                  <div className="h-10 w-10 rounded-full bg-[var(--status-cancelled)]/10 flex items-center justify-center shrink-0">
+                <div className="flex gap-3">
+                  <div className="h-10 w-10 rounded-full bg-[var(--status-cancelled)]/10 flex items-center justify-center shrink-0 mt-0.5">
                     <XCircle className="h-5 w-5 text-[var(--status-cancelled)]" />
                   </div>
-                  <div>
+                  <div className="min-w-0 flex-1">
                     <h3 className="text-sm font-semibold text-text-primary mb-1">
                       Order Cancelled
                     </h3>
@@ -729,9 +729,9 @@ export function OrderDetail({ order, onReorder }: OrderDetailProps) {
                   return (
                     <div
                       key={item.id}
-                      className="flex items-center justify-between rounded-xl border border-border p-4"
+                      className="flex items-center justify-between gap-3 rounded-xl border border-border p-4"
                     >
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
                         <div
                           className={cn(
                             "h-10 w-10 rounded-lg bg-gradient-to-br flex items-center justify-center shrink-0",
@@ -796,9 +796,9 @@ export function OrderDetail({ order, onReorder }: OrderDetailProps) {
                         {formatCurrency(estimatedSubtotal)}
                       </span>
                     </div>
-                    <p className="text-[10px] text-text-muted flex items-center gap-1">
+                    <p className="text-[10px] text-text-muted inline-flex items-center gap-1">
                       <Info className="h-3 w-3 shrink-0" />
-                      Final pricing per your invoice
+                      <span>Final pricing per your invoice</span>
                     </p>
                   </div>
                 )}
@@ -929,11 +929,11 @@ export function OrderDetail({ order, onReorder }: OrderDetailProps) {
             <Card className="border-citro-orange/20 bg-citro-orange/[0.02]">
               <CardContent className="p-5">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
                     <div className="h-10 w-10 rounded-xl bg-citro-orange/10 flex items-center justify-center shrink-0">
                       <RotateCcw className="h-5 w-5 text-citro-orange" />
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <h3 className="text-sm font-semibold text-text-primary">
                         Need to reorder?
                       </h3>

@@ -517,7 +517,7 @@ export function OrdersList({ orders, warehouseAddress }: OrdersListProps) {
                   <Link href={`/orders/${order.id}`}>
                     <Card className="hover:shadow-md transition-all duration-200 cursor-pointer group hover:border-citro-orange/20">
                       <CardContent className="p-4 sm:p-5">
-                        <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-center justify-between gap-3">
                           <div className="min-w-0 flex-1 space-y-2">
                             <div className="flex items-center gap-2 flex-wrap">
                               <span className="font-mono text-sm font-semibold text-text-primary">
@@ -549,8 +549,8 @@ export function OrdersList({ orders, warehouseAddress }: OrdersListProps) {
                             )}
 
                             <div className="flex items-center gap-4 text-xs text-text-muted">
-                              <span className="flex items-center gap-1">
-                                <Calendar className="h-3 w-3" />
+                              <span className="inline-flex items-center gap-1">
+                                <Calendar className="h-3 w-3 shrink-0" />
                                 {formatDate(order.submittedAt)}
                               </span>
                               <span className="truncate">
@@ -562,7 +562,7 @@ export function OrdersList({ orders, warehouseAddress }: OrdersListProps) {
                             <MiniStatusProgress status={order.status} />
                           </div>
 
-                          <ChevronRight className="h-5 w-5 text-text-muted group-hover:text-citro-orange group-hover:translate-x-0.5 transition-all shrink-0 mt-0.5" />
+                          <ChevronRight className="h-5 w-5 text-text-muted group-hover:text-citro-orange group-hover:translate-x-0.5 transition-all shrink-0" />
                         </div>
                       </CardContent>
                     </Card>

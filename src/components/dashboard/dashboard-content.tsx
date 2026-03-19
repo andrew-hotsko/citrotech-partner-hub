@@ -279,9 +279,9 @@ export function DashboardContent({
         {/* ── Certification Alert ─────────────────────────────── */}
         {certExpiring60 && (
           <motion.div variants={itemVariants}>
-            <div className="flex items-start gap-3 rounded-lg border border-warning/30 bg-warning/10 p-4">
+            <div className="flex gap-3 rounded-lg border border-warning/30 bg-warning/10 p-4">
               <AlertTriangle className="h-5 w-5 text-warning shrink-0 mt-0.5" />
-              <div>
+              <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-text-primary">
                   Certification expiring soon
                 </p>
@@ -299,9 +299,9 @@ export function DashboardContent({
         {unreadMessageCount > 0 && (
           <motion.div variants={itemVariants}>
             <Link href="/messages">
-              <div className="flex items-start gap-3 rounded-lg border border-citro-orange/30 bg-citro-orange/10 p-4 hover:bg-citro-orange/15 transition-colors">
+              <div className="flex gap-3 rounded-lg border border-citro-orange/30 bg-citro-orange/10 p-4 hover:bg-citro-orange/15 transition-colors">
                 <Mail className="h-5 w-5 text-citro-orange shrink-0 mt-0.5" />
-                <div>
+                <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-text-primary">
                     You have {unreadMessageCount} unread{" "}
                     {unreadMessageCount === 1 ? "message" : "messages"}
@@ -391,7 +391,7 @@ export function DashboardContent({
                       <Link
                         key={order.id}
                         href={`/orders/${order.id}`}
-                        className="flex items-center justify-between p-3 rounded-lg hover:bg-secondary-bg transition-colors group"
+                        className="flex items-center justify-between gap-3 p-3 rounded-lg hover:bg-secondary-bg transition-colors group"
                       >
                         <div className="flex items-center gap-3 min-w-0">
                           <span className="text-sm font-mono text-text-primary font-medium">
@@ -410,11 +410,11 @@ export function DashboardContent({
                           </span>
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
-                          <span className="text-xs text-text-muted flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
+                          <span className="text-xs text-text-muted inline-flex items-center gap-1">
+                            <Clock className="h-3 w-3 shrink-0" />
                             {formatDate(order.createdAt)}
                           </span>
-                          <ChevronRight className="h-4 w-4 text-text-muted opacity-0 group-hover:opacity-100 transition-opacity" />
+                          <ChevronRight className="h-4 w-4 text-text-muted opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
                         </div>
                       </Link>
                     ))}
