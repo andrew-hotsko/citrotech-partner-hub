@@ -52,17 +52,36 @@ export async function POST(req: Request) {
           return new Response("Missing email", { status: 400 });
         }
 
-        await db.partner.create({
-          data: {
-            clerkUserId: id,
-            email: primaryEmail,
-            firstName: first_name ?? "",
-            lastName: last_name ?? "",
-            companyName: "", // To be completed by partner during onboarding
-          },
+        // Check if a partner was pre-created by admin (matching by email)
+        const preCreated = await db.partner.findUnique({
+          where: { email: primaryEmail },
         });
 
-        console.log(`Partner created for Clerk user: ${id}`);
+        if (preCreated) {
+          // Link the existing partner record to this Clerk user
+          await db.partner.update({
+            where: { email: primaryEmail },
+            data: {
+              clerkUserId: id,
+              firstName: first_name || preCreated.firstName,
+              lastName: last_name || preCreated.lastName,
+            },
+          });
+          console.log(`Linked pre-created partner to Clerk user: ${id}`);
+        } else {
+          // Create a new partner record
+          await db.partner.create({
+            data: {
+              clerkUserId: id,
+              email: primaryEmail,
+              firstName: first_name ?? "",
+              lastName: last_name ?? "",
+              companyName: "", // To be completed by partner during onboarding
+            },
+          });
+          console.log(`Partner created for Clerk user: ${id}`);
+        }
+
         break;
       }
 
