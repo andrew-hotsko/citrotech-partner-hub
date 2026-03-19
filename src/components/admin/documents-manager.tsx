@@ -232,13 +232,17 @@ export function DocumentsManager({
         const formData = new FormData();
         formData.append("file", file);
         const res = await fetch("/api/upload", { method: "POST", body: formData });
-        if (!res.ok) throw new Error("Upload failed");
+        if (!res.ok) {
+          const errData = await res.json().catch(() => null);
+          throw new Error(errData?.error || `Upload failed (${res.status})`);
+        }
         const data = await res.json();
         setUploadedUrl(data.url);
         setUploadProgress(100);
         toast.success("File uploaded");
-      } catch {
-        toast.error("Failed to upload file");
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Failed to upload file";
+        toast.error(message);
         setUploadFile(null);
         setUploadProgress(0);
       } finally {
