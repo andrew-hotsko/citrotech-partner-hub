@@ -21,6 +21,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { toast } from "sonner";
+import { UserProfile } from "@clerk/nextjs";
 import { PageHeader } from "@/components/layout/page-header";
 import {
   Card,
@@ -1119,15 +1120,24 @@ export function ProfileContent({ partner }: ProfileContentProps) {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
+            <div className="space-y-4">
               <Field
                 label="Member Since"
                 value={formatDate(currentPartner.createdAt)}
               />
-              <div className="rounded-lg border border-border-default bg-secondary-bg/50 p-4">
-                <p className="text-sm text-text-secondary leading-relaxed">
-                  To change your password or manage security settings, please contact the CitroTech team.
-                </p>
+              <div className="[&_.cl-userProfile-root]:w-full [&_.cl-card]:shadow-none [&_.cl-card]:border-0 [&_.cl-card]:p-0 [&_.cl-navbar]:hidden [&_.cl-pageScrollBox]:p-0 [&_.cl-profilePage]:p-0 [&_.cl-header]:hidden">
+                <UserProfile
+                  routing="hash"
+                  appearance={{
+                    elements: {
+                      rootBox: "w-full",
+                      card: "shadow-none border-0 bg-transparent p-0",
+                      navbar: "hidden",
+                      pageScrollBox: "p-0",
+                      page: "p-0",
+                    },
+                  }}
+                />
               </div>
             </div>
           </CardContent>
