@@ -91,6 +91,18 @@ model Partner {
   warehouseZip       String?
   warehouseSameAsBusiness Boolean @default(false)
 
+  // Profile enhancements
+  logoUrl            String?
+  preferredContact   String?       // "phone" | "email" | "text"
+  serviceTerritory   String?       // Free text, e.g. "San Diego County, Orange County"
+  specializations    String[]      @default([])
+  websiteUrl         String?
+  yearsInBusiness    Int?
+  crewSize           Int?
+  taxId              String?
+  insuranceProvider  String?
+  insurancePolicyNo  String?
+
   orders        Order[]
   conversations Conversation[]
 

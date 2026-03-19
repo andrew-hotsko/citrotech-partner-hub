@@ -93,6 +93,15 @@ const updateProfileSchema = z.object({
   warehouseSameAsBusiness: z
     .boolean()
     .optional(),
+  preferredContact: z.enum(["phone", "email", "text"]).optional().nullable(),
+  serviceTerritory: z.string().max(500, "Service territory is too long").optional().nullable(),
+  specializations: z.array(z.string()).optional(),
+  websiteUrl: z.string().max(200, "Website URL is too long").optional().nullable(),
+  yearsInBusiness: z.number().int().min(0).max(200).optional().nullable(),
+  crewSize: z.number().int().min(0).max(10000).optional().nullable(),
+  taxId: z.string().max(50, "Tax ID is too long").optional().nullable(),
+  insuranceProvider: z.string().max(200, "Insurance provider name is too long").optional().nullable(),
+  insurancePolicyNo: z.string().max(100, "Policy number is too long").optional().nullable(),
 });
 
 export async function PATCH(req: NextRequest) {
@@ -121,7 +130,7 @@ export async function PATCH(req: NextRequest) {
     }
 
     // Build update data — only include fields that were actually sent
-    const updateData: Record<string, string | boolean | null> = {};
+    const updateData: Record<string, string | boolean | number | string[] | null> = {};
     const allowedFields = [
       "phone",
       "address",
@@ -134,12 +143,25 @@ export async function PATCH(req: NextRequest) {
       "warehouseState",
       "warehouseZip",
       "warehouseSameAsBusiness",
+      "preferredContact",
+      "serviceTerritory",
+      "specializations",
+      "websiteUrl",
+      "yearsInBusiness",
+      "crewSize",
+      "taxId",
+      "insuranceProvider",
+      "insurancePolicyNo",
     ] as const;
 
     for (const field of allowedFields) {
       if (field in body) {
         const value = parsed.data[field];
         if (typeof value === "boolean") {
+          updateData[field] = value;
+        } else if (typeof value === "number") {
+          updateData[field] = value;
+        } else if (Array.isArray(value)) {
           updateData[field] = value;
         } else {
           // Normalize empty strings to null

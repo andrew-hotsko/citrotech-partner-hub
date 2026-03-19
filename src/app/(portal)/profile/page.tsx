@@ -26,6 +26,17 @@ export default async function ProfilePage() {
         certifiedAt: partner.certifiedAt?.toISOString() ?? null,
         certExpiresAt: partner.certExpiresAt?.toISOString() ?? null,
         insuranceExpiry: partner.insuranceExpiry?.toISOString() ?? null,
+        logoUrl: partner.logoUrl,
+        preferredContact: partner.preferredContact,
+        serviceTerritory: partner.serviceTerritory,
+        specializations: partner.specializations,
+        websiteUrl: partner.websiteUrl,
+        yearsInBusiness: partner.yearsInBusiness,
+        crewSize: partner.crewSize,
+        taxId: partner.taxId,
+        insuranceProvider: partner.insuranceProvider,
+        insurancePolicyNo: partner.insurancePolicyNo,
+        createdAt: partner.createdAt.toISOString(),
       }}
     />
   );

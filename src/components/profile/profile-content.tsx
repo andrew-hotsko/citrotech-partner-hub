@@ -2,7 +2,24 @@
 
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Shield, Pencil, Save, X, Loader2, Warehouse, Check } from "lucide-react";
+import {
+  Shield,
+  Pencil,
+  Save,
+  X,
+  Loader2,
+  Warehouse,
+  Check,
+  Upload,
+  Globe,
+  MapPin,
+  Wrench,
+  Building2,
+  Users,
+  Calendar,
+  FileText,
+  ExternalLink,
+} from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/layout/page-header";
 import {
@@ -44,6 +61,17 @@ interface PartnerProfile {
   certifiedAt: string | null;
   certExpiresAt: string | null;
   insuranceExpiry: string | null;
+  logoUrl: string | null;
+  preferredContact: string | null;
+  serviceTerritory: string | null;
+  specializations: string[];
+  websiteUrl: string | null;
+  yearsInBusiness: number | null;
+  crewSize: number | null;
+  taxId: string | null;
+  insuranceProvider: string | null;
+  insurancePolicyNo: string | null;
+  createdAt: string;
 }
 
 interface ProfileContentProps {
@@ -66,6 +94,15 @@ interface EditableFields {
   warehouseState: string;
   warehouseZip: string;
   warehouseSameAsBusiness: boolean;
+  preferredContact: string;
+  serviceTerritory: string;
+  specializations: string[];
+  websiteUrl: string;
+  yearsInBusiness: string;
+  crewSize: string;
+  taxId: string;
+  insuranceProvider: string;
+  insurancePolicyNo: string;
 }
 
 function getEditableDefaults(partner: PartnerProfile): EditableFields {
@@ -81,8 +118,31 @@ function getEditableDefaults(partner: PartnerProfile): EditableFields {
     warehouseState: partner.warehouseState ?? "",
     warehouseZip: partner.warehouseZip ?? "",
     warehouseSameAsBusiness: partner.warehouseSameAsBusiness ?? false,
+    preferredContact: partner.preferredContact ?? "",
+    serviceTerritory: partner.serviceTerritory ?? "",
+    specializations: partner.specializations ?? [],
+    websiteUrl: partner.websiteUrl ?? "",
+    yearsInBusiness: partner.yearsInBusiness?.toString() ?? "",
+    crewSize: partner.crewSize?.toString() ?? "",
+    taxId: partner.taxId ?? "",
+    insuranceProvider: partner.insuranceProvider ?? "",
+    insurancePolicyNo: partner.insurancePolicyNo ?? "",
   };
 }
+
+/* ------------------------------------------------------------------ */
+/*  Constants                                                          */
+/* ------------------------------------------------------------------ */
+
+const SPECIALIZATION_OPTIONS = [
+  "Residential",
+  "Commercial",
+  "Industrial",
+  "Government",
+  "Agricultural",
+];
+
+const CONTACT_METHODS = ["Phone", "Email", "Text"];
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
@@ -217,6 +277,7 @@ const fadeIn = {
 export function ProfileContent({ partner }: ProfileContentProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [fields, setFields] = useState<EditableFields>(
     getEditableDefaults(partner),
   );
@@ -266,6 +327,69 @@ export function ProfileContent({ partner }: ProfileContentProps) {
     }));
   }
 
+  function toggleSpecialization(spec: string) {
+    setFields((prev) => {
+      const has = prev.specializations.includes(spec);
+      return {
+        ...prev,
+        specializations: has
+          ? prev.specializations.filter((s) => s !== spec)
+          : [...prev.specializations, spec],
+      };
+    });
+  }
+
+  async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingLogo(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/partner/logo", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.error ?? "Failed to upload logo");
+      }
+
+      const data = await res.json();
+      setCurrentPartner((prev) => ({ ...prev, logoUrl: data.logoUrl }));
+      toast.success("Logo uploaded successfully");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to upload logo";
+      toast.error(message);
+    } finally {
+      setIsUploadingLogo(false);
+    }
+  }
+
+  async function handleLogoRemove() {
+    setIsUploadingLogo(true);
+    try {
+      const res = await fetch("/api/partner/logo", {
+        method: "DELETE",
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to remove logo");
+      }
+
+      setCurrentPartner((prev) => ({ ...prev, logoUrl: null }));
+      toast.success("Logo removed");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to remove logo";
+      toast.error(message);
+    } finally {
+      setIsUploadingLogo(false);
+    }
+  }
+
   async function handleSave() {
     setIsSaving(true);
     try {
@@ -284,6 +408,15 @@ export function ProfileContent({ partner }: ProfileContentProps) {
           warehouseState: fields.warehouseSameAsBusiness ? fields.state : fields.warehouseState,
           warehouseZip: fields.warehouseSameAsBusiness ? fields.zip : fields.warehouseZip,
           warehouseSameAsBusiness: fields.warehouseSameAsBusiness,
+          preferredContact: fields.preferredContact || null,
+          serviceTerritory: fields.serviceTerritory,
+          specializations: fields.specializations,
+          websiteUrl: fields.websiteUrl,
+          yearsInBusiness: fields.yearsInBusiness ? parseInt(fields.yearsInBusiness, 10) : null,
+          crewSize: fields.crewSize ? parseInt(fields.crewSize, 10) : null,
+          taxId: fields.taxId,
+          insuranceProvider: fields.insuranceProvider,
+          insurancePolicyNo: fields.insurancePolicyNo,
         }),
       });
 
@@ -307,6 +440,16 @@ export function ProfileContent({ partner }: ProfileContentProps) {
         warehouseState: updated.warehouseState,
         warehouseZip: updated.warehouseZip,
         warehouseSameAsBusiness: updated.warehouseSameAsBusiness,
+        logoUrl: prev.logoUrl,
+        preferredContact: updated.preferredContact,
+        serviceTerritory: updated.serviceTerritory,
+        specializations: updated.specializations,
+        websiteUrl: updated.websiteUrl,
+        yearsInBusiness: updated.yearsInBusiness,
+        crewSize: updated.crewSize,
+        taxId: updated.taxId,
+        insuranceProvider: updated.insuranceProvider,
+        insurancePolicyNo: updated.insurancePolicyNo,
       }));
 
       setIsEditing(false);
@@ -381,6 +524,63 @@ export function ProfileContent({ partner }: ProfileContentProps) {
             </div>
           </CardHeader>
           <CardContent>
+            {/* Logo section */}
+            <div className="flex items-center gap-4 mb-6 pb-6 border-b border-border-default">
+              {currentPartner.logoUrl ? (
+                <img
+                  src={currentPartner.logoUrl}
+                  alt={`${currentPartner.companyName} logo`}
+                  className="h-16 w-16 rounded-full object-cover border border-border-default"
+                />
+              ) : (
+                <div className="h-16 w-16 rounded-full bg-secondary-bg border border-border-default flex items-center justify-center">
+                  <Building2 className="h-7 w-7 text-text-muted" aria-hidden="true" />
+                </div>
+              )}
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-text-primary">
+                  {currentPartner.companyName}
+                </p>
+                <p className="text-xs text-text-muted">Company Logo</p>
+                {isEditing && (
+                  <div className="flex items-center gap-2 pt-1">
+                    <label className="cursor-pointer">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="sr-only"
+                        onChange={handleLogoUpload}
+                        disabled={isUploadingLogo}
+                      />
+                      <span
+                        className={cn(
+                          "inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-md border border-border-default bg-primary-bg hover:bg-secondary-bg transition-colors",
+                          isUploadingLogo && "opacity-50 cursor-not-allowed"
+                        )}
+                      >
+                        {isUploadingLogo ? (
+                          <Loader2 className="h-3 w-3 animate-spin" aria-hidden="true" />
+                        ) : (
+                          <Upload className="h-3 w-3" aria-hidden="true" />
+                        )}
+                        {isUploadingLogo ? "Uploading..." : "Upload"}
+                      </span>
+                    </label>
+                    {currentPartner.logoUrl && (
+                      <button
+                        type="button"
+                        onClick={handleLogoRemove}
+                        disabled={isUploadingLogo}
+                        className="text-xs text-red-600 hover:text-red-700 font-medium px-2 py-1.5 rounded-md hover:bg-red-50 transition-colors disabled:opacity-50"
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+
             {isEditing ? (
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field
@@ -597,9 +797,253 @@ export function ProfileContent({ partner }: ProfileContentProps) {
         </Card>
       </motion.div>
 
-      {/* Certification card */}
+      {/* Business Details card */}
       <motion.div
         custom={2}
+        variants={fadeIn}
+        initial="hidden"
+        animate="visible"
+      >
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Wrench
+                className="h-5 w-5 text-text-muted"
+                aria-hidden="true"
+              />
+              <CardTitle>Business Details</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {isEditing ? (
+              <div className="space-y-6">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <EditableField
+                    label="Website URL"
+                    value={fields.websiteUrl}
+                    onChange={(v) => updateField("websiteUrl", v)}
+                    placeholder="https://www.example.com"
+                    type="url"
+                  />
+                  <EditableField
+                    label="Service Territory"
+                    value={fields.serviceTerritory}
+                    onChange={(v) => updateField("serviceTerritory", v)}
+                    placeholder="e.g. Southern California, Tri-State Area"
+                  />
+                  <EditableField
+                    label="Years in Business"
+                    value={fields.yearsInBusiness}
+                    onChange={(v) => updateField("yearsInBusiness", v)}
+                    placeholder="e.g. 10"
+                    type="number"
+                  />
+                  <EditableField
+                    label="Crew Size"
+                    value={fields.crewSize}
+                    onChange={(v) => updateField("crewSize", v)}
+                    placeholder="e.g. 8"
+                    type="number"
+                  />
+                </div>
+
+                {/* Preferred Contact Method */}
+                <div className="space-y-2">
+                  <Label className="text-xs font-medium text-text-muted uppercase tracking-wider">
+                    Preferred Contact Method
+                  </Label>
+                  <div className="flex flex-wrap gap-2">
+                    {CONTACT_METHODS.map((method) => (
+                      <button
+                        key={method}
+                        type="button"
+                        onClick={() => updateField("preferredContact", method)}
+                        className={cn(
+                          "h-9 px-4 rounded-md border-2 text-sm font-medium transition-all",
+                          fields.preferredContact === method
+                            ? "bg-citro-orange border-citro-orange text-white"
+                            : "border-border-default bg-primary-bg text-text-primary hover:border-citro-orange/50"
+                        )}
+                      >
+                        {method}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Specializations */}
+                <div className="space-y-2">
+                  <Label className="text-xs font-medium text-text-muted uppercase tracking-wider">
+                    Specializations
+                  </Label>
+                  <div className="flex flex-wrap gap-3">
+                    {SPECIALIZATION_OPTIONS.map((spec) => {
+                      const isSelected = fields.specializations.includes(spec);
+                      return (
+                        <label
+                          key={spec}
+                          className="flex items-center gap-2 cursor-pointer group"
+                        >
+                          <button
+                            type="button"
+                            role="checkbox"
+                            aria-checked={isSelected}
+                            onClick={() => toggleSpecialization(spec)}
+                            className={cn(
+                              "h-5 w-5 rounded border-2 flex items-center justify-center transition-all",
+                              isSelected
+                                ? "bg-citro-orange border-citro-orange"
+                                : "border-border-default bg-primary-bg group-hover:border-citro-orange/50"
+                            )}
+                          >
+                            {isSelected && (
+                              <Check className="h-3.5 w-3.5 text-white" aria-hidden="true" />
+                            )}
+                          </button>
+                          <span className="text-sm text-text-primary">{spec}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="space-y-1">
+                  <dt className="text-xs font-medium text-text-muted uppercase tracking-wider">
+                    Website
+                  </dt>
+                  <dd className="text-sm text-text-primary">
+                    {currentPartner.websiteUrl ? (
+                      <a
+                        href={currentPartner.websiteUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-citro-orange hover:underline"
+                      >
+                        {currentPartner.websiteUrl.replace(/^https?:\/\//, "")}
+                        <ExternalLink className="h-3 w-3" aria-hidden="true" />
+                      </a>
+                    ) : (
+                      <span className="text-text-muted italic">Not provided</span>
+                    )}
+                  </dd>
+                </div>
+                <Field
+                  label="Preferred Contact"
+                  value={currentPartner.preferredContact}
+                />
+                <Field
+                  label="Service Territory"
+                  value={currentPartner.serviceTerritory}
+                />
+                <div className="space-y-1 sm:col-span-2 lg:col-span-3">
+                  <dt className="text-xs font-medium text-text-muted uppercase tracking-wider">
+                    Specializations
+                  </dt>
+                  <dd>
+                    {currentPartner.specializations && currentPartner.specializations.length > 0 ? (
+                      <div className="flex flex-wrap gap-1.5 pt-0.5">
+                        {currentPartner.specializations.map((spec) => (
+                          <Badge
+                            key={spec}
+                            className="bg-citro-orange/15 text-citro-orange"
+                          >
+                            {spec}
+                          </Badge>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="text-sm text-text-muted italic">Not provided</span>
+                    )}
+                  </dd>
+                </div>
+                <Field
+                  label="Years in Business"
+                  value={currentPartner.yearsInBusiness?.toString() ?? null}
+                />
+                <Field
+                  label="Crew Size"
+                  value={currentPartner.crewSize?.toString() ?? null}
+                />
+              </dl>
+            )}
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      {/* Insurance & Compliance card */}
+      <motion.div
+        custom={3}
+        variants={fadeIn}
+        initial="hidden"
+        animate="visible"
+      >
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <FileText
+                className="h-5 w-5 text-text-muted"
+                aria-hidden="true"
+              />
+              <CardTitle>Insurance &amp; Compliance</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {isEditing ? (
+              <div className="grid gap-4 sm:grid-cols-2">
+                <EditableField
+                  label="Tax ID / EIN"
+                  value={fields.taxId}
+                  onChange={(v) => updateField("taxId", v)}
+                  placeholder="XX-XXXXXXX"
+                />
+                <EditableField
+                  label="Insurance Provider"
+                  value={fields.insuranceProvider}
+                  onChange={(v) => updateField("insuranceProvider", v)}
+                  placeholder="e.g. State Farm"
+                />
+                <EditableField
+                  label="Policy Number"
+                  value={fields.insurancePolicyNo}
+                  onChange={(v) => updateField("insurancePolicyNo", v)}
+                  placeholder="Policy #"
+                />
+              </div>
+            ) : (
+              <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <Field label="Tax ID / EIN" value={currentPartner.taxId} />
+                <Field
+                  label="Insurance Provider"
+                  value={currentPartner.insuranceProvider}
+                />
+                <Field
+                  label="Policy Number"
+                  value={currentPartner.insurancePolicyNo}
+                />
+                <div className="space-y-1">
+                  <dt className="text-xs font-medium text-text-muted uppercase tracking-wider">
+                    Insurance Expires
+                  </dt>
+                  <dd
+                    className={cn(
+                      "text-sm font-medium",
+                      insuranceExpiry.className,
+                    )}
+                  >
+                    {insuranceExpiry.label}
+                  </dd>
+                </div>
+              </dl>
+            )}
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      {/* Certification card */}
+      <motion.div
+        custom={4}
         variants={fadeIn}
         initial="hidden"
         animate="visible"
@@ -648,7 +1092,44 @@ export function ProfileContent({ partner }: ProfileContentProps) {
                   {insuranceExpiry.label}
                 </dd>
               </div>
+              <Field
+                label="Member Since"
+                value={formatDate(currentPartner.createdAt)}
+              />
             </dl>
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      {/* Password & Security card */}
+      <motion.div
+        custom={5}
+        variants={fadeIn}
+        initial="hidden"
+        animate="visible"
+      >
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Shield
+                className="h-5 w-5 text-text-muted"
+                aria-hidden="true"
+              />
+              <CardTitle>Password &amp; Security</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <Field
+                label="Member Since"
+                value={formatDate(currentPartner.createdAt)}
+              />
+              <div className="rounded-lg border border-border-default bg-secondary-bg/50 p-4">
+                <p className="text-sm text-text-secondary leading-relaxed">
+                  To change your password or manage security settings, please contact the CitroTech team.
+                </p>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </motion.div>
