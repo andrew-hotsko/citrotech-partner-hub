@@ -39,9 +39,11 @@ export async function GET(req: NextRequest) {
 const createAnnouncementSchema = z.object({
   title: z.string().min(1, "Title is required"),
   body: z.string().min(1, "Body is required"),
-  type: z.enum(["INFO", "PRODUCT", "TRAINING", "URGENT"]).optional().default("INFO"),
+  type: z.enum(["INFO", "PRODUCT", "TRAINING", "URGENT", "FIELD_NOTE"]).optional().default("INFO"),
   isPinned: z.boolean().optional().default(false),
   expiresAt: z.string().optional(),
+  tags: z.array(z.string()).optional().default([]),
+  attachments: z.array(z.string()).optional().default([]),
 });
 
 export async function POST(req: NextRequest) {
@@ -66,7 +68,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { title, body: announcementBody, type, isPinned, expiresAt } = parsed.data;
+    const { title, body: announcementBody, type, isPinned, expiresAt, tags, attachments } = parsed.data;
 
     const authorName =
       `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim() || "Admin";
@@ -79,6 +81,8 @@ export async function POST(req: NextRequest) {
         isPinned,
         authorName,
         expiresAt: expiresAt ? new Date(expiresAt) : undefined,
+        tags,
+        attachments,
       },
     });
 

@@ -83,13 +83,17 @@ export async function POST(
     ]);
 
     // Send email notification to the other party (non-blocking)
-    if (senderType === "PARTNER" && process.env.ADMIN_EMAIL) {
-      sendNewMessageNotification(
-        { subject: conversation.subject },
-        { senderName, body: parsed.data.body },
-        process.env.ADMIN_EMAIL,
-        "Admin",
-      ).catch((err) => console.error("Message notification email failed:", err));
+    const adminEmails = process.env.ADMIN_NOTIFICATION_EMAILS || process.env.ADMIN_EMAIL;
+    if (senderType === "PARTNER" && adminEmails) {
+      const recipients = adminEmails.split(",").map((e: string) => e.trim()).filter(Boolean);
+      if (recipients.length > 0) {
+        sendNewMessageNotification(
+          { subject: conversation.subject },
+          { senderName, body: parsed.data.body },
+          recipients,
+          "Admin",
+        ).catch((err) => console.error("Message notification email failed:", err));
+      }
     } else if (senderType === "ADMIN") {
       sendNewMessageNotification(
         { subject: conversation.subject },

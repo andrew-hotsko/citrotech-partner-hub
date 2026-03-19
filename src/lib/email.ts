@@ -56,6 +56,22 @@ function emailLayout(content: string): string {
 }
 
 // ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Parse ADMIN_NOTIFICATION_EMAILS env var (comma-separated) into an array.
+ * Falls back to RESEND_FROM_EMAIL if not set.
+ */
+function getAdminNotificationEmails(): string[] {
+  const envVal = process.env.ADMIN_NOTIFICATION_EMAILS;
+  if (envVal && envVal.trim()) {
+    return envVal.split(",").map((e) => e.trim()).filter(Boolean);
+  }
+  return [FROM_EMAIL];
+}
+
+// ---------------------------------------------------------------------------
 // Type definitions matching Prisma models (avoid heavy import)
 // ---------------------------------------------------------------------------
 
@@ -70,6 +86,8 @@ interface PartnerEmailData {
   firstName: string;
   lastName: string;
   email: string;
+  companyName?: string;
+  tier?: string;
 }
 
 interface ConversationEmailData {
@@ -99,7 +117,7 @@ export async function sendOrderConfirmation(
           `<tr>
             <td style="padding:8px 12px;border-bottom:1px solid #f0f0f0;">${item.product}</td>
             <td style="padding:8px 12px;border-bottom:1px solid #f0f0f0;text-align:center;">${item.quantity}</td>
-            <td style="padding:8px 12px;border-bottom:1px solid #f0f0f0;">${item.notes ?? "—"}</td>
+            <td style="padding:8px 12px;border-bottom:1px solid #f0f0f0;">${item.notes ?? "\u2014"}</td>
           </tr>`
       )
       .join("") ?? "";
@@ -136,7 +154,7 @@ export async function sendOrderConfirmation(
     await resend.emails.send({
       from: FROM_EMAIL,
       to: partner.email,
-      subject: `Order ${order.orderNumber} — Confirmation`,
+      subject: `Order ${order.orderNumber} \u2014 Confirmation`,
       html,
     });
   } catch (err) {
@@ -180,7 +198,7 @@ export async function sendOrderStatusUpdate(
     await resend.emails.send({
       from: FROM_EMAIL,
       to: partner.email,
-      subject: `Order ${order.orderNumber} — ${statusLabel}`,
+      subject: `Order ${order.orderNumber} \u2014 ${statusLabel}`,
       html,
     });
   } catch (err) {
@@ -190,11 +208,12 @@ export async function sendOrderStatusUpdate(
 
 /**
  * Sends an email notification when a new message is received in a conversation.
+ * Supports multiple admin recipients via ADMIN_NOTIFICATION_EMAILS env var.
  */
 export async function sendNewMessageNotification(
   conversation: ConversationEmailData,
   message: MessageEmailData,
-  recipientEmail: string,
+  recipientEmail: string | string[],
   recipientName: string
 ) {
   const subjectLine = conversation.subject ?? "your conversation";
@@ -226,14 +245,341 @@ export async function sendNewMessageNotification(
   `);
 
   if (!resend) return;
+
+  // Support sending to multiple recipients
+  const recipients = Array.isArray(recipientEmail) ? recipientEmail : [recipientEmail];
+
   try {
     await resend.emails.send({
       from: FROM_EMAIL,
-      to: recipientEmail,
+      to: recipients,
       subject: `New message in "${subjectLine}"`,
       html,
     });
   } catch (err) {
     console.error("Failed to send new message notification email:", err);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// New email functions
+// ---------------------------------------------------------------------------
+
+/**
+ * Sends a welcome email to a newly created partner.
+ */
+export async function sendWelcomeEmail(
+  partner: PartnerEmailData
+) {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://citrotech-partner-hub.vercel.app";
+
+  const html = emailLayout(`
+    <h2 style="margin:0 0 8px;font-size:20px;color:#171717;">Welcome to the CitroTech Partner Hub!</h2>
+    <p style="margin:0 0 20px;color:#525252;font-size:14px;line-height:1.6;">
+      Hi ${partner.firstName}, congratulations! You've been invited to join the
+      <strong>CitroTech Certified Partner Program</strong>.
+    </p>
+
+    <p style="margin:0 0 8px;color:#525252;font-size:14px;line-height:1.6;">
+      ${partner.companyName ? `We're thrilled to have <strong>${partner.companyName}</strong> on board. ` : ""}As a certified partner, you now have access to:
+    </p>
+
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;font-size:14px;color:#404040;">
+      <tr>
+        <td style="padding:10px 16px;border-bottom:1px solid #f0f0f0;">
+          <strong style="color:#F97316;">Marketing Materials</strong> &mdash; Download brochures, spec sheets, and sales collateral
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:10px 16px;border-bottom:1px solid #f0f0f0;">
+          <strong style="color:#F97316;">Product Orders</strong> &mdash; Place and track orders for MFB-31 and MFB-34 fire barriers
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:10px 16px;border-bottom:1px solid #f0f0f0;">
+          <strong style="color:#F97316;">Direct Messaging</strong> &mdash; Communicate directly with the CitroTech team
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:10px 16px;">
+          <strong style="color:#F97316;">Announcements</strong> &mdash; Stay up to date with product news, training, and field notes
+        </td>
+      </tr>
+    </table>
+
+    <table cellpadding="0" cellspacing="0" style="margin:0 0 24px;">
+      <tr>
+        <td style="border-radius:6px;background:#F97316;">
+          <a href="${appUrl}/sign-in" target="_blank" style="display:inline-block;padding:14px 32px;color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;letter-spacing:0.3px;">
+            Sign In to Your Partner Hub
+          </a>
+        </td>
+      </tr>
+    </table>
+
+    <p style="margin:0;color:#737373;font-size:13px;line-height:1.6;">
+      If you have any questions getting started, simply reply to this email or reach out through the messaging feature in the Partner Hub. We're here to help!
+    </p>
+  `);
+
+  if (!resend) return;
+  try {
+    await resend.emails.send({
+      from: FROM_EMAIL,
+      to: partner.email,
+      subject: "Welcome to the CitroTech Partner Hub!",
+      html,
+    });
+  } catch (err) {
+    console.error("Failed to send welcome email:", err);
+  }
+}
+
+/**
+ * Sends a notification to the ops/admin team when a new order is submitted.
+ */
+export async function sendOrderSubmittedNotification(
+  order: {
+    id: string;
+    orderNumber: string;
+    projectName?: string | null;
+    projectAddress?: string | null;
+    shippingAddress?: string | null;
+    estimatedInstallDate?: Date | null;
+    partnerNotes?: string | null;
+    items: Array<{ product: string; quantity: number; notes?: string | null }>;
+  },
+  partner: PartnerEmailData
+) {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://citrotech-partner-hub.vercel.app";
+  const recipients = getAdminNotificationEmails();
+
+  const itemRows = order.items
+    .map(
+      (item) =>
+        `<tr>
+          <td style="padding:8px 12px;border-bottom:1px solid #f0f0f0;">${item.product}</td>
+          <td style="padding:8px 12px;border-bottom:1px solid #f0f0f0;text-align:center;">${item.quantity}</td>
+          <td style="padding:8px 12px;border-bottom:1px solid #f0f0f0;">${item.notes ?? "\u2014"}</td>
+        </tr>`
+    )
+    .join("");
+
+  const detailRows = [
+    { label: "Order Number", value: order.orderNumber },
+    { label: "Partner", value: `${partner.firstName} ${partner.lastName}` },
+    { label: "Company", value: partner.companyName ?? "\u2014" },
+    { label: "Tier", value: partner.tier ?? "\u2014" },
+    { label: "Project Name", value: order.projectName ?? "\u2014" },
+    { label: "Project Address", value: order.projectAddress ?? "\u2014" },
+    { label: "Shipping Address", value: order.shippingAddress ?? "\u2014" },
+    {
+      label: "Est. Install Date",
+      value: order.estimatedInstallDate
+        ? new Date(order.estimatedInstallDate).toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          })
+        : "\u2014",
+    },
+    { label: "Partner Notes", value: order.partnerNotes ?? "\u2014" },
+  ]
+    .map(
+      (row) =>
+        `<tr>
+          <td style="padding:6px 12px;font-weight:600;color:#737373;font-size:13px;white-space:nowrap;vertical-align:top;">${row.label}</td>
+          <td style="padding:6px 12px;font-size:13px;color:#171717;">${row.value}</td>
+        </tr>`
+    )
+    .join("");
+
+  const html = emailLayout(`
+    <h2 style="margin:0 0 8px;font-size:20px;color:#171717;">New Order Submitted</h2>
+    <p style="margin:0 0 20px;color:#525252;font-size:14px;line-height:1.6;">
+      A new order has been submitted and is awaiting confirmation.
+    </p>
+
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;font-size:13px;">
+      ${detailRows}
+    </table>
+
+    <h3 style="margin:0 0 8px;font-size:15px;color:#171717;">Order Items</h3>
+    <table width="100%" cellpadding="0" cellspacing="0" style="font-size:13px;color:#404040;margin-bottom:24px;">
+      <thead>
+        <tr style="background:#fafaf8;">
+          <th style="padding:8px 12px;text-align:left;font-weight:600;">Product</th>
+          <th style="padding:8px 12px;text-align:center;font-weight:600;">Qty</th>
+          <th style="padding:8px 12px;text-align:left;font-weight:600;">Notes</th>
+        </tr>
+      </thead>
+      <tbody>${itemRows}</tbody>
+    </table>
+
+    <table cellpadding="0" cellspacing="0" style="margin:0 0 16px;">
+      <tr>
+        <td style="border-radius:6px;background:#F97316;">
+          <a href="${appUrl}/admin/orders/${order.id}" target="_blank" style="display:inline-block;padding:12px 28px;color:#ffffff;font-size:14px;font-weight:600;text-decoration:none;">
+            View Order in Admin
+          </a>
+        </td>
+      </tr>
+    </table>
+  `);
+
+  if (!resend) return;
+  try {
+    await resend.emails.send({
+      from: FROM_EMAIL,
+      to: recipients,
+      subject: `[New Order] ${order.orderNumber} from ${partner.companyName ?? `${partner.firstName} ${partner.lastName}`}`,
+      html,
+    });
+  } catch (err) {
+    console.error("Failed to send order submitted notification email:", err);
+  }
+}
+
+/**
+ * Sends a shipping notification to the partner when their order has shipped.
+ */
+export async function sendOrderShippedNotification(
+  order: {
+    orderNumber: string;
+    items?: Array<{ product: string; quantity: number }>;
+  },
+  partner: PartnerEmailData,
+  trackingNumber?: string | null
+) {
+  const itemsSummary = order.items
+    ?.map((item) => `${item.product} x ${item.quantity}`)
+    .join(", ") ?? "";
+
+  const html = emailLayout(`
+    <h2 style="margin:0 0 8px;font-size:20px;color:#171717;">Your Order Has Shipped!</h2>
+    <p style="margin:0 0 20px;color:#525252;font-size:14px;line-height:1.6;">
+      Hi ${partner.firstName}, great news! Your order <strong>${order.orderNumber}</strong> is on its way.
+    </p>
+
+    ${
+      trackingNumber
+        ? `<table cellpadding="0" cellspacing="0" style="margin-bottom:20px;">
+            <tr>
+              <td style="padding:14px 20px;background:#fafaf8;border-left:3px solid #F97316;border-radius:4px;">
+                <p style="margin:0 0 4px;font-size:12px;color:#a3a3a3;font-weight:600;">Tracking Number</p>
+                <p style="margin:0;font-size:16px;color:#171717;font-weight:600;font-family:monospace;">${trackingNumber}</p>
+              </td>
+            </tr>
+          </table>
+          <p style="margin:0 0 20px;color:#737373;font-size:13px;line-height:1.6;">
+            Use this tracking number with your carrier to follow your shipment's progress.
+          </p>`
+        : ""
+    }
+
+    <table cellpadding="0" cellspacing="0" style="margin-bottom:20px;">
+      <tr>
+        <td style="padding:12px 20px;background:#fafaf8;border-radius:6px;font-size:14px;color:#171717;">
+          Estimated delivery: <strong>5\u20137 business days</strong>
+        </td>
+      </tr>
+    </table>
+
+    ${
+      itemsSummary
+        ? `<p style="margin:0 0 20px;color:#737373;font-size:13px;">Items: ${itemsSummary}</p>`
+        : ""
+    }
+
+    <p style="margin:0;color:#525252;font-size:14px;line-height:1.6;">
+      Log in to your Partner Hub dashboard to view full order details.
+    </p>
+  `);
+
+  if (!resend) return;
+  try {
+    await resend.emails.send({
+      from: FROM_EMAIL,
+      to: partner.email,
+      subject: `Your Order ${order.orderNumber} Has Shipped!`,
+      html,
+    });
+  } catch (err) {
+    console.error("Failed to send order shipped notification email:", err);
+  }
+}
+
+/**
+ * Sends a certification expiry reminder to a partner.
+ * Subject urgency varies based on days until expiry.
+ */
+export async function sendCertExpiryReminder(
+  partner: PartnerEmailData & { certExpiresAt?: Date | null },
+  daysUntilExpiry: number
+) {
+  let subject: string;
+  let urgencyColor: string;
+
+  if (daysUntilExpiry <= 7) {
+    subject = "URGENT: Certification Expires in 7 Days";
+    urgencyColor = "#DC2626"; // red
+  } else if (daysUntilExpiry <= 14) {
+    subject = "Certification Expiring Soon";
+    urgencyColor = "#F97316"; // orange
+  } else {
+    subject = "Certification Renewal Reminder";
+    urgencyColor = "#EAB308"; // yellow
+  }
+
+  const expiryDateStr = partner.certExpiresAt
+    ? new Date(partner.certExpiresAt).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      })
+    : "soon";
+
+  const html = emailLayout(`
+    <h2 style="margin:0 0 8px;font-size:20px;color:#171717;">${subject}</h2>
+    <p style="margin:0 0 20px;color:#525252;font-size:14px;line-height:1.6;">
+      Hi ${partner.firstName}, this is a reminder that your CitroTech Certified Partner certification
+      is set to expire on <strong style="color:${urgencyColor};">${expiryDateStr}</strong>.
+    </p>
+
+    <table cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+      <tr>
+        <td style="padding:14px 20px;background:#fafaf8;border-left:3px solid ${urgencyColor};border-radius:4px;">
+          <p style="margin:0;font-size:14px;color:#171717;line-height:1.6;">
+            <strong>${daysUntilExpiry} day${daysUntilExpiry !== 1 ? "s" : ""}</strong> remaining until your certification expires.
+          </p>
+        </td>
+      </tr>
+    </table>
+
+    <p style="margin:0 0 8px;color:#525252;font-size:14px;line-height:1.6;">
+      To renew your certification, please contact the CitroTech team:
+    </p>
+    <ul style="margin:0 0 20px;padding-left:20px;color:#525252;font-size:14px;line-height:1.8;">
+      <li>Send a message through the Partner Hub</li>
+      <li>Email us at <a href="mailto:${FROM_EMAIL}" style="color:#F97316;">${FROM_EMAIL}</a></li>
+      <li>Call the partner support line</li>
+    </ul>
+
+    <p style="margin:0;color:#737373;font-size:13px;line-height:1.6;">
+      An expired certification may affect your ability to place orders and access partner resources.
+      Please renew as soon as possible to avoid any interruption.
+    </p>
+  `);
+
+  if (!resend) return;
+  try {
+    await resend.emails.send({
+      from: FROM_EMAIL,
+      to: partner.email,
+      subject,
+      html,
+    });
+  } catch (err) {
+    console.error("Failed to send cert expiry reminder email:", err);
   }
 }

@@ -23,6 +23,11 @@ import {
   Shield,
   XCircle,
   Clock,
+  DollarSign,
+  Receipt,
+  CreditCard,
+  ExternalLink,
+  Info,
   type LucideIcon,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -32,6 +37,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { formatDate } from "@/lib/format";
+import {
+  PRODUCTS as PRICING_PRODUCTS,
+  getEstimatedSubtotal,
+  formatCurrency,
+  LEAD_TIME_DAYS,
+} from "@/lib/pricing";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -50,10 +61,14 @@ interface OrderData {
   status: string;
   projectName: string | null;
   projectAddress: string | null;
+  shippingAddress: string | null;
   estimatedInstallDate: string | null;
   partnerNotes: string | null;
   adminNotes: string | null;
   trackingNumber: string | null;
+  paymentStatus: string | null;
+  invoiceNumber: string | null;
+  estimatedShipDate: string | null;
   submittedAt: string;
   confirmedAt: string | null;
   shippedAt: string | null;
@@ -64,6 +79,7 @@ interface OrderData {
 
 interface OrderDetailProps {
   order: OrderData;
+  onReorder?: () => void;
 }
 
 /* ------------------------------------------------------------------ */
@@ -74,6 +90,7 @@ const PRODUCT_INFO: Record<
   string,
   {
     label: string;
+    pricingId: string;
     name: string;
     description: string;
     icon: LucideIcon;
@@ -84,6 +101,7 @@ const PRODUCT_INFO: Record<
 > = {
   MFB_31: {
     label: "MFB-31",
+    pricingId: "MFB-31",
     name: "Vegetation Treatment",
     description:
       "Protects landscaping, brush, and ground cover from wildfire ignition",
@@ -94,6 +112,7 @@ const PRODUCT_INFO: Record<
   },
   MFB_34: {
     label: "MFB-34",
+    pricingId: "MFB-34",
     name: "Structural Treatment",
     description:
       "Protects decks, fences, siding, and other structures from fire",
@@ -103,6 +122,11 @@ const PRODUCT_INFO: Record<
     unit: "gallons",
   },
 };
+
+/** Look up pricing product data */
+function getPricingProduct(pricingId: string) {
+  return PRICING_PRODUCTS.find((p) => p.id === pricingId);
+}
 
 type StatusKey =
   | "submitted"
@@ -195,10 +219,52 @@ function getEstimatedDelivery(order: OrderData): string | null {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Payment Status Badge                                               */
+/* ------------------------------------------------------------------ */
+
+function PaymentStatusBadge({ status }: { status: string }) {
+  const config: Record<
+    string,
+    { bg: string; text: string; label: string }
+  > = {
+    PENDING: {
+      bg: "bg-[var(--status-processing)]/10",
+      text: "text-[var(--status-processing)]",
+      label: "Pending",
+    },
+    INVOICED: {
+      bg: "bg-[var(--status-submitted)]/10",
+      text: "text-[var(--status-submitted)]",
+      label: "Invoiced",
+    },
+    PAID: {
+      bg: "bg-[var(--status-delivered)]/10",
+      text: "text-[var(--status-delivered)]",
+      label: "Paid",
+    },
+  };
+
+  const c = config[status] ?? config.PENDING;
+
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium",
+        c.bg,
+        c.text
+      )}
+    >
+      <CreditCard className="h-3 w-3" />
+      {c.label}
+    </span>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /*  Component                                                          */
 /* ------------------------------------------------------------------ */
 
-export function OrderDetail({ order }: OrderDetailProps) {
+export function OrderDetail({ order, onReorder }: OrderDetailProps) {
   const router = useRouter();
   const currentIndex = STATUS_ORDER[order.status] ?? -1;
   const isCancelled = order.status === "CANCELLED";
@@ -217,6 +283,11 @@ export function OrderDetail({ order }: OrderDetailProps) {
 
   // Reorder
   const handleReorder = useCallback(() => {
+    if (onReorder) {
+      onReorder();
+      return;
+    }
+
     const params = new URLSearchParams();
     params.set("reorder", "true");
 
@@ -237,9 +308,16 @@ export function OrderDetail({ order }: OrderDetailProps) {
     }
 
     router.push(`/orders?${params.toString()}`);
-  }, [order, router]);
+  }, [order, router, onReorder]);
 
   const estimatedDelivery = getEstimatedDelivery(order);
+
+  // Calculate estimated pricing
+  const pricingItems = order.items.map((item) => ({
+    productId: PRODUCT_INFO[item.product]?.pricingId ?? "",
+    quantity: item.quantity,
+  }));
+  const estimatedSubtotal = getEstimatedSubtotal(pricingItems);
 
   return (
     <PageTransition>
@@ -288,7 +366,7 @@ export function OrderDetail({ order }: OrderDetailProps) {
             </Badge>
           </div>
 
-          {/* Reorder button - prominent */}
+          {/* Reorder button - prominent on delivered orders */}
           <Button
             variant={isDelivered ? "default" : "outline"}
             onClick={handleReorder}
@@ -532,9 +610,103 @@ export function OrderDetail({ order }: OrderDetailProps) {
           </Card>
         )}
 
+        {/* Payment Status Section */}
+        {order.paymentStatus && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+          >
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Receipt className="h-4 w-4 text-forest-teal" />
+                  Payment Status
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <PaymentStatusBadge status={order.paymentStatus} />
+                  {order.invoiceNumber && (
+                    <div className="text-right">
+                      <p className="text-xs text-text-muted">Invoice</p>
+                      <p className="text-sm font-mono font-semibold text-text-primary">
+                        {order.invoiceNumber}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+
+        {/* Shipping Info Section */}
+        {(order.shippingAddress ||
+          order.estimatedShipDate ||
+          order.trackingNumber) && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+          >
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Truck className="h-4 w-4 text-forest-teal" />
+                  Shipping Information
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <dl className="space-y-3 text-sm">
+                  {order.shippingAddress && (
+                    <div>
+                      <dt className="text-text-muted text-xs">
+                        Shipping Address
+                      </dt>
+                      <dd className="text-text-primary mt-0.5 flex items-start gap-1.5">
+                        <MapPin className="h-3.5 w-3.5 text-text-muted mt-0.5 shrink-0" />
+                        {order.shippingAddress}
+                      </dd>
+                    </div>
+                  )}
+                  {order.estimatedShipDate && (
+                    <div>
+                      <dt className="text-text-muted text-xs">
+                        Estimated Ship Date
+                      </dt>
+                      <dd className="text-text-primary mt-0.5 flex items-center gap-1.5">
+                        <Calendar className="h-3.5 w-3.5 text-text-muted" />
+                        {formatDate(order.estimatedShipDate)}
+                      </dd>
+                    </div>
+                  )}
+                  {order.trackingNumber && (
+                    <div>
+                      <dt className="text-text-muted text-xs">
+                        Tracking Number
+                      </dt>
+                      <dd className="text-text-primary mt-0.5 flex items-center gap-1.5">
+                        <Package className="h-3.5 w-3.5 text-text-muted" />
+                        <span className="font-mono font-semibold">
+                          {order.trackingNumber}
+                        </span>
+                        <span className="text-xs text-text-muted flex items-center gap-0.5 ml-1">
+                          <ExternalLink className="h-3 w-3" />
+                          Track Shipment
+                        </span>
+                      </dd>
+                    </div>
+                  )}
+                </dl>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+
         {/* Info & Items grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Items - shown first for prominence */}
+          {/* Items with pricing - shown first for prominence */}
           <Card>
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
@@ -547,6 +719,12 @@ export function OrderDetail({ order }: OrderDetailProps) {
                 {order.items.map((item) => {
                   const info = PRODUCT_INFO[item.product];
                   const Icon = info?.icon ?? Package;
+                  const pricing = info
+                    ? getPricingProduct(info.pricingId)
+                    : undefined;
+                  const lineTotal = pricing
+                    ? pricing.basePrice * item.quantity
+                    : null;
 
                   return (
                     <div
@@ -574,6 +752,12 @@ export function OrderDetail({ order }: OrderDetailProps) {
                           <p className="text-xs text-text-muted mt-0.5">
                             {info?.description ?? ""}
                           </p>
+                          {pricing && (
+                            <p className="text-[10px] text-text-muted mt-0.5 tabular-nums">
+                              {formatCurrency(pricing.basePrice)} x{" "}
+                              {item.quantity} {info?.unit ?? "units"}
+                            </p>
+                          )}
                           {item.notes && (
                             <p className="text-xs text-text-secondary mt-1 italic">
                               {item.notes}
@@ -588,10 +772,36 @@ export function OrderDetail({ order }: OrderDetailProps) {
                         <p className="text-[10px] text-text-muted uppercase">
                           {info?.unit ?? "units"}
                         </p>
+                        {lineTotal !== null && (
+                          <p className="text-xs font-medium text-text-secondary tabular-nums mt-0.5">
+                            {formatCurrency(lineTotal)}
+                          </p>
+                        )}
                       </div>
                     </div>
                   );
                 })}
+
+                {/* Pricing Summary */}
+                {estimatedSubtotal > 0 && (
+                  <div className="space-y-2 pt-2">
+                    <div className="flex items-center justify-between rounded-lg border border-citro-orange/20 bg-citro-orange/[0.03] p-3">
+                      <div className="flex items-center gap-2">
+                        <DollarSign className="h-4 w-4 text-citro-orange" />
+                        <span className="text-sm font-medium text-text-secondary">
+                          Estimated Subtotal
+                        </span>
+                      </div>
+                      <span className="text-lg font-bold text-text-primary tabular-nums">
+                        {formatCurrency(estimatedSubtotal)}
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-text-muted flex items-center gap-1">
+                      <Info className="h-3 w-3 shrink-0" />
+                      Final pricing per your invoice
+                    </p>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -708,6 +918,39 @@ export function OrderDetail({ order }: OrderDetailProps) {
             </dl>
           </CardContent>
         </Card>
+
+        {/* Prominent reorder CTA for delivered orders */}
+        {isDelivered && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <Card className="border-citro-orange/20 bg-citro-orange/[0.02]">
+              <CardContent className="p-5">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-xl bg-citro-orange/10 flex items-center justify-center shrink-0">
+                      <RotateCcw className="h-5 w-5 text-citro-orange" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-semibold text-text-primary">
+                        Need to reorder?
+                      </h3>
+                      <p className="text-xs text-text-muted">
+                        Place the same order again with just one click.
+                      </p>
+                    </div>
+                  </div>
+                  <Button onClick={handleReorder} className="shadow-md">
+                    <RotateCcw className="h-4 w-4" />
+                    Order Again
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
       </div>
     </PageTransition>
   );

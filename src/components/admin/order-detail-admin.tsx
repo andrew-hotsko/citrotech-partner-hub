@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
@@ -24,6 +24,10 @@ import {
   Package,
   Leaf,
   Shield,
+  CreditCard,
+  Receipt,
+  DollarSign,
+  Home,
   type LucideIcon,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -44,6 +48,7 @@ import {
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { formatDate } from "@/lib/format";
+import { PRODUCTS, getEstimatedSubtotal, formatCurrency } from "@/lib/pricing";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -67,16 +72,22 @@ interface PartnerData {
   status: string;
 }
 
+type PaymentStatus = "PENDING" | "INVOICED" | "PAID";
+
 interface OrderData {
   id: string;
   orderNumber: string;
   status: string;
   projectName: string | null;
   projectAddress: string | null;
+  shippingAddress: string | null;
   estimatedInstallDate: string | null;
   partnerNotes: string | null;
   adminNotes: string | null;
   trackingNumber: string | null;
+  paymentStatus: PaymentStatus | null;
+  invoiceNumber: string | null;
+  estimatedShipDate: string | null;
   submittedAt: string;
   confirmedAt: string | null;
   shippedAt: string | null;
@@ -176,6 +187,18 @@ const statusColors: Record<string, string> = {
   CANCELLED: "bg-status-cancelled/15 text-status-cancelled",
 };
 
+const paymentStatusColors: Record<PaymentStatus, string> = {
+  PENDING: "bg-warning/15 text-warning",
+  INVOICED: "bg-info/15 text-info",
+  PAID: "bg-success/15 text-success",
+};
+
+const paymentStatusLabels: Record<PaymentStatus, string> = {
+  PENDING: "Pending",
+  INVOICED: "Invoiced",
+  PAID: "Paid",
+};
+
 function getStepDate(step: StatusKey, order: OrderData): string | null {
   switch (step) {
     case "submitted":
@@ -207,6 +230,20 @@ export function OrderDetailAdmin({ order }: OrderDetailAdminProps) {
   );
   const [saving, setSaving] = useState(false);
 
+  // Invoice & Payment state
+  const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>(
+    order.paymentStatus ?? "PENDING"
+  );
+  const [invoiceNumber, setInvoiceNumber] = useState(
+    order.invoiceNumber ?? ""
+  );
+  const [estimatedShipDate, setEstimatedShipDate] = useState(
+    order.estimatedShipDate
+      ? new Date(order.estimatedShipDate).toISOString().split("T")[0]
+      : ""
+  );
+  const [savingPayment, setSavingPayment] = useState(false);
+
   // Status change confirmation dialog
   const [pendingStatus, setPendingStatus] = useState<string | null>(null);
   const [shipTrackingNumber, setShipTrackingNumber] = useState("");
@@ -215,6 +252,38 @@ export function OrderDetailAdmin({ order }: OrderDetailAdminProps) {
   const hasNoteChanges =
     adminNotes !== (order.adminNotes ?? "") ||
     trackingNumber !== (order.trackingNumber ?? "");
+
+  const hasPaymentChanges =
+    paymentStatus !== (order.paymentStatus ?? "PENDING") ||
+    invoiceNumber !== (order.invoiceNumber ?? "") ||
+    estimatedShipDate !==
+      (order.estimatedShipDate
+        ? new Date(order.estimatedShipDate).toISOString().split("T")[0]
+        : "");
+
+  // Pricing calculation
+  const estimatedPricing = useMemo(() => {
+    const lineItems = order.items.map((item) => {
+      const productId = item.product === "MFB_31" ? "MFB-31" : "MFB-34";
+      const productInfo = PRODUCTS.find((p) => p.id === productId);
+      const unitPrice = productInfo?.basePrice ?? 0;
+      const lineTotal = unitPrice * item.quantity;
+      return {
+        product: PRODUCT_INFO[item.product]?.label ?? item.product,
+        quantity: item.quantity,
+        unit: PRODUCT_INFO[item.product]?.unit ?? "units",
+        unitPrice,
+        lineTotal,
+      };
+    });
+    const subtotal = getEstimatedSubtotal(
+      order.items.map((item) => ({
+        productId: item.product === "MFB_31" ? "MFB-31" : "MFB-34",
+        quantity: item.quantity,
+      }))
+    );
+    return { lineItems, subtotal };
+  }, [order.items]);
 
   const allowedTransitions = VALID_TRANSITIONS[order.status] ?? [];
 
@@ -257,11 +326,64 @@ export function OrderDetailAdmin({ order }: OrderDetailAdminProps) {
     router,
   ]);
 
+  // Save invoice & payment fields
+  const handleSavePayment = useCallback(async () => {
+    setSavingPayment(true);
+    try {
+      const body: Record<string, unknown> = {};
+      if (paymentStatus !== (order.paymentStatus ?? "PENDING"))
+        body.paymentStatus = paymentStatus;
+      if (invoiceNumber !== (order.invoiceNumber ?? ""))
+        body.invoiceNumber = invoiceNumber;
+      if (
+        estimatedShipDate !==
+        (order.estimatedShipDate
+          ? new Date(order.estimatedShipDate).toISOString().split("T")[0]
+          : "")
+      )
+        body.estimatedShipDate = estimatedShipDate || null;
+
+      const res = await fetch(`/api/orders/${order.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to update payment info");
+      }
+
+      toast.success("Payment information updated");
+      router.refresh();
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Something went wrong"
+      );
+    } finally {
+      setSavingPayment(false);
+    }
+  }, [
+    order.id,
+    order.paymentStatus,
+    order.invoiceNumber,
+    order.estimatedShipDate,
+    paymentStatus,
+    invoiceNumber,
+    estimatedShipDate,
+    router,
+  ]);
+
   // Confirm status change
   const handleConfirmedStatusChange = useCallback(async () => {
     if (!pendingStatus) return;
     setConfirming(true);
     try {
+      if (pendingStatus === "SHIPPED" && !shipTrackingNumber.trim()) {
+        toast.error("Tracking number is required when shipping an order");
+        setConfirming(false);
+        return;
+      }
       const body: Record<string, unknown> = { status: pendingStatus };
       if (pendingStatus === "SHIPPED" && shipTrackingNumber.trim()) {
         body.trackingNumber = shipTrackingNumber.trim();
@@ -538,6 +660,23 @@ export function OrderDetailAdmin({ order }: OrderDetailAdminProps) {
               </CardContent>
             </Card>
 
+            {/* Shipping Address */}
+            {order.shippingAddress && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Home className="h-4 w-4 text-forest-teal" />
+                    Shipping Address
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-text-primary whitespace-pre-wrap">
+                    {order.shippingAddress}
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Items */}
             <Card>
               <CardHeader>
@@ -596,6 +735,50 @@ export function OrderDetailAdmin({ order }: OrderDetailAdminProps) {
                       </div>
                     );
                   })}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Estimated Pricing */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <DollarSign className="h-4 w-4 text-forest-teal" />
+                  Estimated Pricing (for reference)
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {estimatedPricing.lineItems.map((line, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center justify-between text-sm"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono font-medium text-text-primary">
+                          {line.product}
+                        </span>
+                        <span className="text-text-muted">
+                          {line.quantity} {line.unit} @ {formatCurrency(line.unitPrice)}/{line.unit.replace(/s$/, "")}
+                        </span>
+                      </div>
+                      <span className="font-mono text-text-primary tabular-nums">
+                        {formatCurrency(line.lineTotal)}
+                      </span>
+                    </div>
+                  ))}
+                  <div className="border-t border-border pt-3 flex items-center justify-between">
+                    <span className="text-sm font-semibold text-text-primary">
+                      Estimated Subtotal
+                    </span>
+                    <span className="text-base font-bold font-mono text-text-primary tabular-nums">
+                      {formatCurrency(estimatedPricing.subtotal)}
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-text-muted">
+                    Pricing is estimated and may vary based on partner tier and
+                    volume discounts. Final pricing will be on the invoice.
+                  </p>
                 </div>
               </CardContent>
             </Card>
@@ -729,6 +912,93 @@ export function OrderDetailAdmin({ order }: OrderDetailAdminProps) {
                       : "This order has been delivered. No further status changes needed."}
                   </p>
                 )}
+              </CardContent>
+            </Card>
+
+            {/* Invoice & Payment */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Receipt className="h-4 w-4 text-citro-orange" />
+                  Invoice & Payment
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-5">
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="payment-status-select"
+                    className="text-xs text-text-secondary"
+                  >
+                    Payment Status
+                  </Label>
+                  <select
+                    id="payment-status-select"
+                    value={paymentStatus}
+                    onChange={(e) =>
+                      setPaymentStatus(e.target.value as PaymentStatus)
+                    }
+                    className="w-full h-10 rounded-lg border border-border bg-card px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-citro-orange/40"
+                  >
+                    {(["PENDING", "INVOICED", "PAID"] as PaymentStatus[]).map(
+                      (ps) => (
+                        <option key={ps} value={ps}>
+                          {paymentStatusLabels[ps]}
+                        </option>
+                      )
+                    )}
+                  </select>
+                  <div className="mt-1">
+                    <span
+                      className={cn(
+                        "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
+                        paymentStatusColors[paymentStatus]
+                      )}
+                    >
+                      <CreditCard className="h-3 w-3 mr-1" />
+                      {paymentStatusLabels[paymentStatus]}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="invoice-number-input"
+                    className="text-xs text-text-secondary"
+                  >
+                    Invoice Number
+                  </Label>
+                  <Input
+                    id="invoice-number-input"
+                    placeholder="e.g., INV-2026-0042"
+                    value={invoiceNumber}
+                    onChange={(e) => setInvoiceNumber(e.target.value)}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="estimated-ship-date"
+                    className="text-xs text-text-secondary"
+                  >
+                    Estimated Ship Date
+                  </Label>
+                  <Input
+                    id="estimated-ship-date"
+                    type="date"
+                    value={estimatedShipDate}
+                    onChange={(e) => setEstimatedShipDate(e.target.value)}
+                  />
+                </div>
+
+                <Button
+                  onClick={handleSavePayment}
+                  loading={savingPayment}
+                  disabled={!hasPaymentChanges || savingPayment}
+                  fullWidth
+                >
+                  <Save className="h-4 w-4" />
+                  {savingPayment ? "Saving..." : "Save Payment Info"}
+                </Button>
               </CardContent>
             </Card>
 
@@ -929,7 +1199,7 @@ export function OrderDetailAdmin({ order }: OrderDetailAdminProps) {
               </div>
             )}
 
-            {/* Tracking number for SHIPPED */}
+            {/* Tracking number for SHIPPED - required */}
             {isShippingPending && (
               <div className="px-6 space-y-2">
                 <Label
@@ -937,17 +1207,17 @@ export function OrderDetailAdmin({ order }: OrderDetailAdminProps) {
                   className="text-xs text-text-secondary"
                 >
                   Tracking Number
-                  <span className="text-text-muted ml-1">(optional)</span>
+                  <span className="text-error ml-1">*</span>
                 </Label>
                 <Input
                   id="confirm-tracking"
                   placeholder="Enter tracking number..."
                   value={shipTrackingNumber}
                   onChange={(e) => setShipTrackingNumber(e.target.value)}
+                  required
                 />
                 <p className="text-[10px] text-text-muted">
-                  The tracking number will be visible to the partner on their
-                  order detail page.
+                  Partner will be notified with tracking info.
                 </p>
               </div>
             )}
@@ -966,6 +1236,10 @@ export function OrderDetailAdmin({ order }: OrderDetailAdminProps) {
                 size="sm"
                 onClick={handleConfirmedStatusChange}
                 loading={confirming}
+                disabled={
+                  confirming ||
+                  (isShippingPending && !shipTrackingNumber.trim())
+                }
               >
                 {isDestructivePending
                   ? "Yes, Cancel Order"

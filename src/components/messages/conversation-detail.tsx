@@ -4,7 +4,7 @@ import React, { useState, useCallback, useRef, useEffect, useMemo } from "react"
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Send, ChevronDown, RefreshCw } from "lucide-react";
+import { ArrowLeft, Send, ChevronDown, RefreshCw, Check } from "lucide-react";
 import { toast } from "sonner";
 import { PageTransition } from "@/components/layout/page-transition";
 import { Badge } from "@/components/ui/badge";
@@ -23,6 +23,7 @@ interface MessageData {
   senderName: string;
   body: string;
   createdAt: string;
+  isReadByAdmin?: boolean;
   // Optimistic message fields
   _optimistic?: boolean;
   _failed?: boolean;
@@ -162,12 +163,14 @@ export function ConversationDetail({
             senderName: string;
             body: string;
             createdAt: string;
+            isReadByAdmin?: boolean;
           }) => ({
             id: m.id,
             senderType: m.senderType,
             senderName: m.senderName,
             body: m.body,
             createdAt: m.createdAt,
+            isReadByAdmin: m.isReadByAdmin,
           })
         ),
       };
@@ -499,6 +502,16 @@ export function ConversationDetail({
                         {formatRelativeTime(message.createdAt)}
                       </span>
                     )}
+                    {/* Read by CitroTech indicator for partner messages */}
+                    {isPartner &&
+                      !isOptimistic &&
+                      !isFailed &&
+                      message.isReadByAdmin && (
+                        <span className="inline-flex items-center gap-0.5 text-[10px] text-text-muted">
+                          <Check className="h-2.5 w-2.5" />
+                          Read
+                        </span>
+                      )}
                   </div>
                 </div>
               </motion.div>

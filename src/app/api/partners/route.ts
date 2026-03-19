@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { currentUser } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
+import { sendWelcomeEmail } from "@/lib/email";
 
 // POST /api/partners — Admin creates a new partner record
 export async function POST(req: Request) {
@@ -52,6 +53,14 @@ export async function POST(req: Request) {
         certExpiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year from now
       },
     });
+
+    // Send welcome email to the new partner (non-blocking)
+    sendWelcomeEmail({
+      firstName: partner.firstName,
+      lastName: partner.lastName,
+      email: partner.email,
+      companyName: partner.companyName,
+    }).catch((err) => console.error("Welcome email failed:", err));
 
     return NextResponse.json(partner, { status: 201 });
   } catch (error) {

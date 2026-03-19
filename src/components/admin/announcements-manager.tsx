@@ -55,7 +55,7 @@ interface Announcement {
   id: string;
   title: string;
   body: string;
-  type: "INFO" | "PRODUCT" | "TRAINING" | "URGENT";
+  type: "INFO" | "PRODUCT" | "TRAINING" | "URGENT" | "FIELD_NOTE";
   isPinned: boolean;
   authorName: string;
   publishedAt: string;
@@ -79,6 +79,7 @@ const TYPE_CONFIG: Record<
   PRODUCT: { label: "Product", variant: "secondary", borderColor: "border-l-forest-teal" },
   TRAINING: { label: "Training", variant: "default", borderColor: "border-l-citro-orange" },
   URGENT: { label: "Urgent", variant: "destructive", borderColor: "border-l-error" },
+  FIELD_NOTE: { label: "Field Note", variant: "outline", borderColor: "border-l-forest-teal" },
 };
 
 /**
@@ -610,6 +611,7 @@ export function AnnouncementsManager({
                     <option value="PRODUCT">Product</option>
                     <option value="TRAINING">Training</option>
                     <option value="URGENT">Urgent</option>
+                    <option value="FIELD_NOTE">Field Note</option>
                   </Select>
                 </div>
 

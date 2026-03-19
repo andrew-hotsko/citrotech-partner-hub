@@ -3,7 +3,7 @@ import { currentUser } from "@clerk/nextjs/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { getRole, getPartnerByClerkId } from "@/lib/auth";
-import { sendOrderConfirmation } from "@/lib/email";
+import { sendOrderConfirmation, sendOrderSubmittedNotification } from "@/lib/email";
 
 // ---------------------------------------------------------------------------
 // GET /api/orders — List orders
@@ -69,6 +69,7 @@ const createOrderSchema = z.object({
   projectAddress: z.string().optional(),
   estimatedInstallDate: z.string().optional(),
   partnerNotes: z.string().optional(),
+  shippingAddress: z.string().optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -101,7 +102,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { items, projectName, projectAddress, estimatedInstallDate, partnerNotes } =
+    const { items, projectName, projectAddress, estimatedInstallDate, partnerNotes, shippingAddress } =
       parsed.data;
 
     // Generate order number inside a transaction to prevent race conditions
@@ -124,6 +125,7 @@ export async function POST(req: NextRequest) {
           partnerId: partner.id,
           projectName,
           projectAddress,
+          shippingAddress,
           estimatedInstallDate: estimatedInstallDate
             ? new Date(estimatedInstallDate)
             : undefined,
@@ -158,6 +160,31 @@ export async function POST(req: NextRequest) {
         email: partner.email,
       },
     ).catch((err) => console.error("Order confirmation email failed:", err));
+
+    // Notify admin/ops team about the new order (non-blocking)
+    sendOrderSubmittedNotification(
+      {
+        id: order.id,
+        orderNumber: order.orderNumber,
+        projectName: order.projectName,
+        projectAddress: order.projectAddress,
+        shippingAddress: order.shippingAddress,
+        estimatedInstallDate: order.estimatedInstallDate,
+        partnerNotes: order.partnerNotes,
+        items: order.items.map((i) => ({
+          product: i.product,
+          quantity: i.quantity,
+          notes: i.notes,
+        })),
+      },
+      {
+        firstName: partner.firstName,
+        lastName: partner.lastName,
+        email: partner.email,
+        companyName: partner.companyName,
+        tier: partner.tier,
+      },
+    ).catch((err) => console.error("Order submitted notification email failed:", err));
 
     return NextResponse.json(order, { status: 201 });
   } catch (error) {

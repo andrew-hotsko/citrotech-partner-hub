@@ -3,7 +3,7 @@ import { currentUser } from "@clerk/nextjs/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { getRole, getPartnerByClerkId } from "@/lib/auth";
-import { sendOrderStatusUpdate } from "@/lib/email";
+import { sendOrderStatusUpdate, sendOrderShippedNotification } from "@/lib/email";
 
 // ---------------------------------------------------------------------------
 // GET /api/orders/[id] — Get order detail
@@ -59,6 +59,10 @@ const updateOrderSchema = z.object({
     .optional(),
   adminNotes: z.string().optional(),
   trackingNumber: z.string().optional(),
+  paymentStatus: z.enum(["PENDING", "INVOICED", "PAID"]).optional(),
+  invoiceNumber: z.string().optional(),
+  estimatedShipDate: z.string().optional(),
+  shippingAddress: z.string().optional(),
 });
 
 export async function PATCH(
@@ -96,7 +100,7 @@ export async function PATCH(
       );
     }
 
-    const { status, adminNotes, trackingNumber } = parsed.data;
+    const { status, adminNotes, trackingNumber, paymentStatus, invoiceNumber, estimatedShipDate, shippingAddress } = parsed.data;
 
     // Validate status transition
     if (status && status !== existing.status) {
@@ -141,6 +145,12 @@ export async function PATCH(
         ...(status ? { status } : {}),
         ...(adminNotes !== undefined ? { adminNotes } : {}),
         ...(trackingNumber !== undefined ? { trackingNumber } : {}),
+        ...(paymentStatus ? { paymentStatus } : {}),
+        ...(invoiceNumber !== undefined ? { invoiceNumber } : {}),
+        ...(estimatedShipDate !== undefined
+          ? { estimatedShipDate: estimatedShipDate ? new Date(estimatedShipDate) : null }
+          : {}),
+        ...(shippingAddress !== undefined ? { shippingAddress } : {}),
         ...timestamps,
       },
       include: { items: true, partner: true },
@@ -161,6 +171,25 @@ export async function PATCH(
         },
         status,
       ).catch((err) => console.error("Order status email failed:", err));
+
+      // Send shipped notification with tracking info when status changes to SHIPPED
+      if (status === "SHIPPED") {
+        sendOrderShippedNotification(
+          {
+            orderNumber: order.orderNumber,
+            items: order.items.map((i) => ({
+              product: i.product,
+              quantity: i.quantity,
+            })),
+          },
+          {
+            firstName: existing.partner.firstName,
+            lastName: existing.partner.lastName,
+            email: existing.partner.email,
+          },
+          order.trackingNumber,
+        ).catch((err) => console.error("Order shipped notification email failed:", err));
+      }
     }
 
     return NextResponse.json(order);

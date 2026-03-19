@@ -55,6 +55,13 @@ enum AnnouncementType {
   PRODUCT
   TRAINING
   URGENT
+  FIELD_NOTE
+}
+
+enum PaymentStatus {
+  PENDING
+  INVOICED
+  PAID
 }
 
 // ─── Models ──────────────────────────────────────────────────
@@ -134,13 +141,18 @@ model Order {
   partnerNotes         String?
   adminNotes           String?
   trackingNumber       String?
+  paymentStatus        PaymentStatus @default(PENDING)
+  invoiceNumber        String?
+  estimatedShipDate    DateTime?
+  shippingAddress      String?
   submittedAt          DateTime    @default(now())
   confirmedAt          DateTime?
   shippedAt            DateTime?
   deliveredAt          DateTime?
 
-  partner Partner     @relation(fields: [partnerId], references: [id])
-  items   OrderItem[]
+  partner       Partner        @relation(fields: [partnerId], references: [id])
+  items         OrderItem[]
+  conversations Conversation[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -167,8 +179,11 @@ model Conversation {
   subject       String?
   status        ConversationStatus @default(OPEN)
   lastMessageAt DateTime           @default(now())
+  orderId       String?
+  assignedTo    String?
 
   partner  Partner   @relation(fields: [partnerId], references: [id])
+  order    Order?    @relation(fields: [orderId], references: [id])
   messages Message[]
 
   createdAt DateTime @default(now())
@@ -205,6 +220,8 @@ model Announcement {
   authorName  String
   publishedAt DateTime         @default(now())
   expiresAt   DateTime?
+  tags        String[]   @default([])
+  attachments String[]   @default([])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

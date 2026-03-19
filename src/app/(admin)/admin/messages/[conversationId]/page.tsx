@@ -16,6 +16,9 @@ export default async function AdminConversationPage({ params }: ConversationPage
     include: {
       partner: true,
       messages: { orderBy: { createdAt: "asc" } },
+      order: {
+        select: { id: true, orderNumber: true },
+      },
     },
   });
 
@@ -33,5 +36,12 @@ export default async function AdminConversationPage({ params }: ConversationPage
     data: { isReadByAdmin: true },
   });
 
-  return <ConversationDetailAdmin conversation={JSON.parse(JSON.stringify(conversation))} />;
+  // Serialize with orderId and order reference
+  const serialized = {
+    ...JSON.parse(JSON.stringify(conversation)),
+    orderId: (conversation as any).orderId ?? null,
+    order: (conversation as any).order ?? null,
+  };
+
+  return <ConversationDetailAdmin conversation={serialized} />;
 }

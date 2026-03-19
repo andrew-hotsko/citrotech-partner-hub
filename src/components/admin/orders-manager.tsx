@@ -14,6 +14,8 @@ import {
   PackageCheck,
   XCircle,
   AlertTriangle,
+  CreditCard,
+  Clock,
 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/layout/page-header";
@@ -52,6 +54,8 @@ interface OrderItem {
   quantity: number;
 }
 
+type PaymentStatus = "PENDING" | "INVOICED" | "PAID";
+
 interface Order {
   id: string;
   orderNumber: string;
@@ -59,6 +63,7 @@ interface Order {
   projectName: string | null;
   submittedAt: string;
   createdAt: string;
+  paymentStatus: PaymentStatus | null;
   partner: { firstName: string; lastName: string; companyName: string };
   items: OrderItem[];
 }
@@ -103,6 +108,25 @@ const VALID_TRANSITIONS: Record<string, string[]> = {
   DELIVERED: ["CANCELLED"],
   CANCELLED: [],
 };
+
+const paymentStatusColors: Record<PaymentStatus, string> = {
+  PENDING: "bg-warning/15 text-warning",
+  INVOICED: "bg-info/15 text-info",
+  PAID: "bg-success/15 text-success",
+};
+
+const paymentStatusLabels: Record<PaymentStatus, string> = {
+  PENDING: "Pending",
+  INVOICED: "Invoiced",
+  PAID: "Paid",
+};
+
+function isAwaitingReview(order: Order): boolean {
+  if (order.status !== "SUBMITTED") return false;
+  const submittedAt = new Date(order.submittedAt).getTime();
+  const now = Date.now();
+  return now - submittedAt > 24 * 60 * 60 * 1000;
+}
 
 const STATUS_ACTION_CONFIG: Record<
   string,
@@ -231,6 +255,11 @@ export function OrdersManager({ orders }: OrdersManagerProps) {
 
     setConfirming(true);
     try {
+      if (confirmation.newStatus === "SHIPPED" && !trackingNumber.trim()) {
+        toast.error("Tracking number is required when shipping an order");
+        setConfirming(false);
+        return;
+      }
       const body: Record<string, unknown> = {
         status: confirmation.newStatus,
       };
@@ -354,18 +383,37 @@ export function OrdersManager({ orders }: OrdersManagerProps) {
                           {order.partner.companyName}
                         </td>
                         <td className="px-4 py-3">
-                          <span
-                            className={cn(
-                              "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
-                              statusColors[order.status] ??
-                                "bg-secondary-bg text-text-secondary"
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span
+                              className={cn(
+                                "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
+                                statusColors[order.status] ??
+                                  "bg-secondary-bg text-text-secondary"
+                              )}
+                            >
+                              {order.status === "CANCELLED"
+                                ? "Cancelled"
+                                : order.status.charAt(0) +
+                                  order.status.slice(1).toLowerCase()}
+                            </span>
+                            {order.paymentStatus && (
+                              <span
+                                className={cn(
+                                  "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium",
+                                  paymentStatusColors[order.paymentStatus]
+                                )}
+                              >
+                                <CreditCard className="h-2.5 w-2.5" />
+                                {paymentStatusLabels[order.paymentStatus]}
+                              </span>
                             )}
-                          >
-                            {order.status === "CANCELLED"
-                              ? "Cancelled"
-                              : order.status.charAt(0) +
-                                order.status.slice(1).toLowerCase()}
-                          </span>
+                            {isAwaitingReview(order) && (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-medium text-warning">
+                                <Clock className="h-2.5 w-2.5" />
+                                Awaiting review
+                              </span>
+                            )}
+                          </div>
                         </td>
                         <td className="px-4 py-3 text-text-muted text-xs">
                           {order.items
@@ -483,6 +531,23 @@ export function OrdersManager({ orders }: OrdersManagerProps) {
                             {order.status.charAt(0) +
                               order.status.slice(1).toLowerCase()}
                           </Badge>
+                          {order.paymentStatus && (
+                            <span
+                              className={cn(
+                                "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium",
+                                paymentStatusColors[order.paymentStatus]
+                              )}
+                            >
+                              <CreditCard className="h-2.5 w-2.5" />
+                              {paymentStatusLabels[order.paymentStatus]}
+                            </span>
+                          )}
+                          {isAwaitingReview(order) && (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-medium text-warning">
+                              <Clock className="h-2.5 w-2.5" />
+                              Awaiting review
+                            </span>
+                          )}
                         </div>
                         <p className="text-xs text-text-secondary">
                           {order.partner.companyName} --{" "}
@@ -596,7 +661,7 @@ export function OrdersManager({ orders }: OrdersManagerProps) {
               </div>
             )}
 
-            {/* Tracking number field for SHIPPED */}
+            {/* Tracking number field for SHIPPED - required */}
             {isShipping && (
               <div className="px-6 space-y-2">
                 <Label
@@ -604,17 +669,17 @@ export function OrdersManager({ orders }: OrdersManagerProps) {
                   className="text-xs text-text-secondary"
                 >
                   Tracking Number
-                  <span className="text-text-muted ml-1">(optional)</span>
+                  <span className="text-error ml-1">*</span>
                 </Label>
                 <Input
                   id="tracking-number"
                   placeholder="Enter tracking number..."
                   value={trackingNumber}
                   onChange={(e) => setTrackingNumber(e.target.value)}
+                  required
                 />
                 <p className="text-[10px] text-text-muted">
-                  The tracking number will be visible to the partner on their
-                  order detail page.
+                  Partner will be notified with tracking info.
                 </p>
               </div>
             )}
@@ -633,6 +698,9 @@ export function OrdersManager({ orders }: OrdersManagerProps) {
                 size="sm"
                 onClick={handleConfirmedStatusUpdate}
                 loading={confirming}
+                disabled={
+                  confirming || (isShipping && !trackingNumber.trim())
+                }
               >
                 {isDestructive
                   ? "Yes, Cancel Order"

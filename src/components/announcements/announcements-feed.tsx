@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
 /*  Types                                                              */
 /* ------------------------------------------------------------------ */
 
-type AnnouncementType = "INFO" | "PRODUCT" | "TRAINING" | "URGENT";
+type AnnouncementType = "INFO" | "PRODUCT" | "TRAINING" | "URGENT" | "FIELD_NOTE";
 
 interface Announcement {
   id: string;
@@ -41,6 +41,7 @@ const borderColorMap: Record<AnnouncementType, string> = {
   PRODUCT: "#105D50",
   TRAINING: "#F78E25",
   URGENT: "#DC2626",
+  FIELD_NOTE: "#105D50",
 };
 
 const badgeClassMap: Record<AnnouncementType, string> = {
@@ -48,6 +49,7 @@ const badgeClassMap: Record<AnnouncementType, string> = {
   PRODUCT: "bg-forest-teal/15 text-forest-teal",
   TRAINING: "bg-citro-orange/15 text-citro-orange",
   URGENT: "bg-red-500/15 text-red-600",
+  FIELD_NOTE: "bg-forest-teal/15 text-forest-teal",
 };
 
 /* ------------------------------------------------------------------ */
@@ -60,6 +62,7 @@ const typeFilters: { value: AnnouncementType | "ALL"; label: string }[] = [
   { value: "TRAINING", label: "Training" },
   { value: "URGENT", label: "Urgent" },
   { value: "INFO", label: "Info" },
+  { value: "FIELD_NOTE", label: "Field Note" },
 ];
 
 /* ------------------------------------------------------------------ */

@@ -8,6 +8,8 @@ import {
   ChevronRight,
   Search,
   X,
+  Clock,
+  CheckCircle,
 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { PageTransition } from "@/components/layout/page-transition";
@@ -59,6 +61,39 @@ const STATUS_VARIANT: Record<string, "default" | "secondary" | "outline"> = {
   RESOLVED: "secondary",
   ARCHIVED: "outline",
 };
+
+function getPartnerWaitingTime(conversation: Conversation): {
+  isWaiting: boolean;
+  label: string;
+} {
+  const lastMsg = conversation.messages[0];
+  if (!lastMsg) return { isWaiting: false, label: "" };
+
+  // If the last message is from admin, they've responded
+  if (lastMsg.senderType === "ADMIN") {
+    return { isWaiting: false, label: "Responded" };
+  }
+
+  // Last message is from partner - calculate wait time
+  const waitMs = Date.now() - new Date(lastMsg.createdAt).getTime();
+  const waitMinutes = Math.floor(waitMs / 60000);
+  const waitHours = Math.floor(waitMinutes / 60);
+  const remainingMinutes = waitMinutes % 60;
+
+  if (waitHours > 0) {
+    return {
+      isWaiting: true,
+      label: `Partner waiting: ${waitHours}h ${remainingMinutes}m`,
+    };
+  }
+  if (waitMinutes > 0) {
+    return {
+      isWaiting: true,
+      label: `Partner waiting: ${waitMinutes}m`,
+    };
+  }
+  return { isWaiting: true, label: "Partner waiting: <1m" };
+}
 
 /* ------------------------------------------------------------------ */
 /*  Animation                                                          */
@@ -206,6 +241,7 @@ export function MessagesManager({ conversations }: MessagesManagerProps) {
               const unreadCount = conversation._count.messages;
               const lastMsg = conversation.messages[0];
               const hasUnread = unreadCount > 0;
+              const responseTime = getPartnerWaitingTime(conversation);
 
               return (
                 <motion.div key={conversation.id} variants={listItem}>
@@ -258,6 +294,25 @@ export function MessagesManager({ conversations }: MessagesManagerProps) {
                                   {lastMsg.senderType === "ADMIN" ? "You" : lastMsg.senderName}:
                                 </span>{" "}
                                 {lastMsg.body.slice(0, 120)}
+                              </p>
+                            )}
+
+                            {/* Response time indicator */}
+                            {responseTime.label && (
+                              <p
+                                className={cn(
+                                  "text-[11px] font-medium flex items-center gap-1",
+                                  responseTime.isWaiting
+                                    ? "text-warning"
+                                    : "text-success"
+                                )}
+                              >
+                                {responseTime.isWaiting ? (
+                                  <Clock className="h-3 w-3" />
+                                ) : (
+                                  <CheckCircle className="h-3 w-3" />
+                                )}
+                                {responseTime.label}
                               </p>
                             )}
                           </div>

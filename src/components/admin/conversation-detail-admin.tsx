@@ -14,6 +14,8 @@ import {
   CheckCircle,
   Archive,
   RotateCcw,
+  Package,
+  Clock,
 } from "lucide-react";
 import { toast } from "sonner";
 import { PageTransition } from "@/components/layout/page-transition";
@@ -45,10 +47,17 @@ interface PartnerData {
   tier: string;
 }
 
+interface OrderRef {
+  id: string;
+  orderNumber: string;
+}
+
 interface ConversationData {
   id: string;
   subject: string | null;
   status: "OPEN" | "RESOLVED" | "ARCHIVED";
+  orderId: string | null;
+  order: OrderRef | null;
   createdAt: string;
   messages: MessageData[];
   partner: PartnerData;
@@ -75,6 +84,37 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 /* ------------------------------------------------------------------ */
+/*  Helpers                                                            */
+/* ------------------------------------------------------------------ */
+
+function getPartnerWaitingInfo(messages: MessageData[]): {
+  isWaiting: boolean;
+  label: string;
+} {
+  if (messages.length === 0) return { isWaiting: false, label: "" };
+  // Messages are sorted asc, so last message is at the end
+  const lastMsg = messages[messages.length - 1];
+  if (lastMsg.senderType === "ADMIN") {
+    return { isWaiting: false, label: "" };
+  }
+  const waitMs = Date.now() - new Date(lastMsg.createdAt).getTime();
+  const waitMinutes = Math.floor(waitMs / 60000);
+  const waitHours = Math.floor(waitMinutes / 60);
+  const remainingMinutes = waitMinutes % 60;
+
+  if (waitHours > 0) {
+    return {
+      isWaiting: true,
+      label: `Partner waiting: ${waitHours}h ${remainingMinutes}m`,
+    };
+  }
+  if (waitMinutes > 0) {
+    return { isWaiting: true, label: `Partner waiting: ${waitMinutes}m` };
+  }
+  return { isWaiting: true, label: "Partner waiting: <1m" };
+}
+
+/* ------------------------------------------------------------------ */
 /*  Component                                                          */
 /* ------------------------------------------------------------------ */
 
@@ -92,7 +132,7 @@ export function ConversationDetailAdmin({
   // Poll for new messages every 30 seconds
   const { data: conversation } = useQuery<ConversationData>({
     queryKey: ["admin-conversation", initialConversation.id],
-    queryFn: async () => {
+    queryFn: async (): Promise<ConversationData> => {
       const res = await fetch(`/api/conversations/${initialConversation.id}`);
       if (!res.ok) throw new Error("Failed to fetch conversation");
       const data = await res.json();
@@ -101,6 +141,8 @@ export function ConversationDetailAdmin({
         subject: data.subject,
         status: data.status,
         createdAt: data.createdAt,
+        orderId: data.orderId ?? null,
+        order: data.order ?? null,
         messages: data.messages.map(
           (m: {
             id: string;
@@ -217,6 +259,17 @@ export function ConversationDetailAdmin({
             Back to Messages
           </Link>
 
+          {/* Related order link */}
+          {conversation.orderId && conversation.order && (
+            <Link
+              href={`/admin/orders/${conversation.orderId}`}
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-forest-teal hover:text-forest-teal-light transition-colors bg-forest-teal-muted rounded-lg px-3 py-1.5 w-fit"
+            >
+              <Package className="h-3.5 w-3.5" />
+              Related to Order: {conversation.order.orderNumber}
+            </Link>
+          )}
+
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
@@ -250,6 +303,17 @@ export function ConversationDetailAdmin({
                   <Mail className="h-3 w-3" />
                   {conversation.partner.email}
                 </span>
+                {/* Partner waiting time */}
+                {(() => {
+                  const waitInfo = getPartnerWaitingInfo(conversation.messages);
+                  if (!waitInfo.isWaiting) return null;
+                  return (
+                    <span className="flex items-center gap-1 text-warning font-medium">
+                      <Clock className="h-3 w-3" />
+                      {waitInfo.label}
+                    </span>
+                  );
+                })()}
               </div>
             </div>
 

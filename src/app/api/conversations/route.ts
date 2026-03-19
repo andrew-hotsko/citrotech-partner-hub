@@ -72,6 +72,7 @@ export async function GET(req: NextRequest) {
 const createConversationSchema = z.object({
   subject: z.string().min(1, "Subject is required"),
   body: z.string().min(1, "Message body is required"),
+  orderId: z.string().optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -93,7 +94,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { subject, body: messageBody } = parsed.data;
+    const { subject, body: messageBody, orderId } = parsed.data;
 
     // Determine sender identity
     const senderType = role === "admin" ? "ADMIN" : "PARTNER";
@@ -126,6 +127,7 @@ export async function POST(req: NextRequest) {
       data: {
         partnerId,
         subject,
+        orderId,
         messages: {
           create: {
             senderType,
@@ -140,14 +142,18 @@ export async function POST(req: NextRequest) {
       include: { messages: true, partner: true },
     });
 
-    // Send email notification to admin (non-blocking)
-    if (senderType === "PARTNER" && process.env.ADMIN_EMAIL) {
-      sendNewMessageNotification(
-        { subject },
-        { senderName, body: messageBody },
-        process.env.ADMIN_EMAIL,
-        "Admin",
-      ).catch((err) => console.error("New conversation email failed:", err));
+    // Send email notification to admin(s) (non-blocking)
+    const adminEmails = process.env.ADMIN_NOTIFICATION_EMAILS || process.env.ADMIN_EMAIL;
+    if (senderType === "PARTNER" && adminEmails) {
+      const recipients = adminEmails.split(",").map((e: string) => e.trim()).filter(Boolean);
+      if (recipients.length > 0) {
+        sendNewMessageNotification(
+          { subject },
+          { senderName, body: messageBody },
+          recipients,
+          "Admin",
+        ).catch((err) => console.error("New conversation email failed:", err));
+      }
     }
 
     return NextResponse.json(conversation, { status: 201 });

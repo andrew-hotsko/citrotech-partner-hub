@@ -46,7 +46,7 @@ interface DashboardOrder {
 interface DashboardAnnouncement {
   id: string;
   title: string;
-  type: "INFO" | "PRODUCT" | "TRAINING" | "URGENT";
+  type: "INFO" | "PRODUCT" | "TRAINING" | "URGENT" | "FIELD_NOTE";
   publishedAt: string;
 }
 
@@ -119,6 +119,7 @@ const announcementBorderColors: Record<DashboardAnnouncement["type"], string> = 
   PRODUCT: "border-l-forest-teal",
   TRAINING: "border-l-citro-orange",
   URGENT: "border-l-error",
+  FIELD_NOTE: "border-l-forest-teal",
 };
 
 /* ------------------------------------------------------------------ */

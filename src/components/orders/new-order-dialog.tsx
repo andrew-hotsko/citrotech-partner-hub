@@ -17,6 +17,9 @@ import {
   Sparkles,
   Leaf,
   Shield,
+  Truck,
+  DollarSign,
+  Info,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -29,6 +32,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { ProgressSteps, type ProgressStep } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
+import {
+  PRODUCTS as PRICING_PRODUCTS,
+  getEstimatedSubtotal,
+  formatCurrency,
+  LEAD_TIME_DAYS,
+} from "@/lib/pricing";
 
 /* ------------------------------------------------------------------ */
 /*  Types & Constants                                                   */
@@ -51,6 +60,8 @@ interface ProductSelection {
 }
 
 const NOTES_MAX_LENGTH = 500;
+const MIN_QUANTITY = 5;
+const QUANTITY_STEP = 5;
 
 const PRODUCTS = [
   {
@@ -80,6 +91,11 @@ const PRODUCTS = [
     iconColor: "text-blue-600",
   },
 ];
+
+/** Get pricing info for a product by its code (e.g. "MFB-31") */
+function getPricingProduct(code: string) {
+  return PRICING_PRODUCTS.find((p) => p.id === code);
+}
 
 /* ------------------------------------------------------------------ */
 /*  Step indicator helpers                                              */
@@ -116,8 +132,8 @@ function QuantitySelector({
     <div className="flex items-center gap-3">
       <button
         type="button"
-        onClick={() => onChange(Math.max(1, value - 1))}
-        disabled={value <= 1}
+        onClick={() => onChange(Math.max(MIN_QUANTITY, value - QUANTITY_STEP))}
+        disabled={value <= MIN_QUANTITY}
         className="h-9 w-9 rounded-lg border border-border bg-card flex items-center justify-center text-text-secondary hover:bg-secondary-bg hover:text-text-primary disabled:opacity-40 disabled:pointer-events-none transition-colors"
         aria-label="Decrease quantity"
       >
@@ -131,7 +147,7 @@ function QuantitySelector({
       </div>
       <button
         type="button"
-        onClick={() => onChange(value + 1)}
+        onClick={() => onChange(value + QUANTITY_STEP)}
         className="h-9 w-9 rounded-lg border border-border bg-card flex items-center justify-center text-text-secondary hover:bg-secondary-bg hover:text-text-primary transition-colors"
         aria-label="Increase quantity"
       >
@@ -177,11 +193,15 @@ export function NewOrderDialog({
   >({
     mfb31: {
       selected: !!prefill?.mfb31Qty,
-      quantity: prefill?.mfb31Qty || 1,
+      quantity: prefill?.mfb31Qty
+        ? Math.max(MIN_QUANTITY, prefill.mfb31Qty)
+        : MIN_QUANTITY,
     },
     mfb34: {
       selected: !!prefill?.mfb34Qty,
-      quantity: prefill?.mfb34Qty || 1,
+      quantity: prefill?.mfb34Qty
+        ? Math.max(MIN_QUANTITY, prefill.mfb34Qty)
+        : MIN_QUANTITY,
     },
   });
 
@@ -193,6 +213,10 @@ export function NewOrderDialog({
   const [estimatedInstallDate, setEstimatedInstallDate] = useState("");
   const [partnerNotes, setPartnerNotes] = useState("");
 
+  // Shipping address
+  const [shipToProjectAddress, setShipToProjectAddress] = useState(true);
+  const [separateShippingAddress, setSeparateShippingAddress] = useState("");
+
   // Validation
   const [dateError, setDateError] = useState<string | null>(null);
 
@@ -203,17 +227,36 @@ export function NewOrderDialog({
     return now.toISOString().split("T")[0];
   }, []);
 
+  // Calculate estimated subtotal
+  const estimatedSubtotal = useMemo(() => {
+    const items: { productId: string; quantity: number }[] = [];
+    if (products.mfb31.selected) {
+      items.push({ productId: "MFB-31", quantity: products.mfb31.quantity });
+    }
+    if (products.mfb34.selected) {
+      items.push({ productId: "MFB-34", quantity: products.mfb34.quantity });
+    }
+    return getEstimatedSubtotal(items);
+  }, [products]);
+
+  // Resolved shipping address
+  const resolvedShippingAddress = shipToProjectAddress
+    ? projectAddress
+    : separateShippingAddress;
+
   const resetForm = useCallback(() => {
     setStep(0);
     setDirection(1);
     setProducts({
-      mfb31: { selected: false, quantity: 1 },
-      mfb34: { selected: false, quantity: 1 },
+      mfb31: { selected: false, quantity: MIN_QUANTITY },
+      mfb34: { selected: false, quantity: MIN_QUANTITY },
     });
     setProjectName("");
     setProjectAddress("");
     setEstimatedInstallDate("");
     setPartnerNotes("");
+    setShipToProjectAddress(true);
+    setSeparateShippingAddress("");
     setDateError(null);
   }, []);
 
@@ -231,7 +274,7 @@ export function NewOrderDialog({
     (key: "mfb31" | "mfb34", qty: number) => {
       setProducts((prev) => ({
         ...prev,
-        [key]: { ...prev[key], quantity: qty },
+        [key]: { ...prev[key], quantity: Math.max(MIN_QUANTITY, qty) },
       }));
     },
     []
@@ -274,6 +317,11 @@ export function NewOrderDialog({
 
     if (items.length === 0) return;
 
+    // Determine the shipping address to send
+    const shippingAddress = shipToProjectAddress
+      ? projectAddress || undefined
+      : separateShippingAddress || undefined;
+
     setSubmitting(true);
     try {
       const res = await fetch("/api/orders", {
@@ -285,6 +333,7 @@ export function NewOrderDialog({
           projectAddress: projectAddress || undefined,
           estimatedInstallDate: estimatedInstallDate || undefined,
           partnerNotes: partnerNotes || undefined,
+          shippingAddress,
         }),
       });
 
@@ -313,6 +362,8 @@ export function NewOrderDialog({
     projectAddress,
     estimatedInstallDate,
     partnerNotes,
+    shipToProjectAddress,
+    separateShippingAddress,
     onOpenChange,
     resetForm,
     router,
@@ -369,7 +420,7 @@ export function NewOrderDialog({
                   </h3>
                   <p className="text-xs text-text-muted">
                     Select one or both CitroTech fire barrier products for your
-                    project.
+                    project. Minimum order: {MIN_QUANTITY} gallons per product.
                   </p>
                 </div>
 
@@ -377,6 +428,7 @@ export function NewOrderDialog({
                   {PRODUCTS.map((product) => {
                     const sel = products[product.key];
                     const Icon = product.icon;
+                    const pricing = getPricingProduct(product.code);
 
                     return (
                       <motion.div
@@ -430,6 +482,18 @@ export function NewOrderDialog({
                             <p className="text-xs text-text-muted leading-relaxed">
                               {product.description}
                             </p>
+
+                            {/* Pricing and coverage info */}
+                            {pricing && (
+                              <div className="flex items-center gap-3 mt-2">
+                                <span className="text-xs font-medium text-text-secondary">
+                                  ~{formatCurrency(pricing.basePrice)}/gal
+                                </span>
+                                <span className="text-xs text-text-muted">
+                                  {pricing.coverage}
+                                </span>
+                              </div>
+                            )}
                           </div>
                         </div>
 
@@ -449,9 +513,16 @@ export function NewOrderDialog({
                               onClick={(e) => e.stopPropagation()}
                             >
                               <div className="flex items-center justify-between pt-4 border-t border-border/50">
-                                <span className="text-sm font-medium text-text-secondary">
-                                  Quantity
-                                </span>
+                                <div>
+                                  <span className="text-sm font-medium text-text-secondary">
+                                    Quantity
+                                  </span>
+                                  {sel.quantity < MIN_QUANTITY && (
+                                    <p className="text-[10px] text-citro-orange mt-0.5">
+                                      Minimum order: {MIN_QUANTITY} gallons
+                                    </p>
+                                  )}
+                                </div>
                                 <QuantitySelector
                                   value={sel.quantity}
                                   onChange={(q) =>
@@ -460,6 +531,14 @@ export function NewOrderDialog({
                                   unit={product.unit}
                                 />
                               </div>
+                              {/* Line price estimate */}
+                              {pricing && (
+                                <div className="flex items-center justify-end mt-2">
+                                  <span className="text-xs text-text-muted tabular-nums">
+                                    Est. {formatCurrency(pricing.basePrice * sel.quantity)}
+                                  </span>
+                                </div>
+                              )}
                             </motion.div>
                           )}
                         </AnimatePresence>
@@ -472,6 +551,30 @@ export function NewOrderDialog({
                   <p className="text-xs text-text-muted text-center pt-2">
                     Click a product card to select it
                   </p>
+                )}
+
+                {/* Running subtotal */}
+                {hasProductSelected && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="pt-4 border-t border-border"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <DollarSign className="h-4 w-4 text-text-muted" />
+                        <span className="text-sm font-medium text-text-secondary">
+                          Estimated subtotal
+                        </span>
+                      </div>
+                      <span className="text-lg font-bold text-text-primary tabular-nums">
+                        {formatCurrency(estimatedSubtotal)}
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-text-muted mt-1 text-right">
+                      (Final pricing confirmed upon order review)
+                    </p>
+                  </motion.div>
                 )}
               </motion.div>
             )}
@@ -585,6 +688,66 @@ export function NewOrderDialog({
                     rows={3}
                   />
                 </div>
+
+                {/* Shipping Address Section */}
+                <div className="space-y-3 pt-4 border-t border-border">
+                  <h3 className="text-sm font-semibold text-text-primary flex items-center gap-2">
+                    <Truck className="h-4 w-4 text-forest-teal" />
+                    Shipping Address
+                  </h3>
+
+                  <label className="flex items-center gap-2.5 cursor-pointer group">
+                    <input
+                      type="checkbox"
+                      checked={shipToProjectAddress}
+                      onChange={(e) =>
+                        setShipToProjectAddress(e.target.checked)
+                      }
+                      className="h-4 w-4 rounded border-border text-citro-orange focus:ring-citro-orange/30 accent-[var(--citro-orange)] cursor-pointer"
+                    />
+                    <span className="text-sm text-text-secondary group-hover:text-text-primary transition-colors">
+                      Ship to project address
+                    </span>
+                  </label>
+
+                  <AnimatePresence>
+                    {!shipToProjectAddress && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="space-y-2">
+                          <Label
+                            htmlFor="new-order-shipping-address"
+                            className="text-xs text-text-secondary"
+                          >
+                            Separate Shipping Address
+                          </Label>
+                          <Textarea
+                            id="new-order-shipping-address"
+                            placeholder="Enter the full shipping address..."
+                            value={separateShippingAddress}
+                            onChange={(e) =>
+                              setSeparateShippingAddress(e.target.value)
+                            }
+                            rows={2}
+                          />
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  {shipToProjectAddress && !projectAddress && (
+                    <p className="text-[10px] text-text-muted flex items-center gap-1">
+                      <Info className="h-3 w-3 shrink-0" />
+                      Enter a project address above or uncheck to provide a
+                      separate shipping address.
+                    </p>
+                  )}
+                </div>
               </motion.div>
             )}
 
@@ -611,7 +774,7 @@ export function NewOrderDialog({
                   </p>
                 </div>
 
-                {/* Products Summary */}
+                {/* Products Summary with pricing */}
                 <div className="space-y-3">
                   <h4 className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
                     Products
@@ -619,6 +782,11 @@ export function NewOrderDialog({
                   {selectedProducts.map((product) => {
                     const sel = products[product.key];
                     const Icon = product.icon;
+                    const pricing = getPricingProduct(product.code);
+                    const lineTotal = pricing
+                      ? pricing.basePrice * sel.quantity
+                      : null;
+
                     return (
                       <div
                         key={product.key}
@@ -642,6 +810,12 @@ export function NewOrderDialog({
                             <p className="text-xs text-text-muted">
                               {product.name}
                             </p>
+                            {pricing && (
+                              <p className="text-[10px] text-text-muted mt-0.5 tabular-nums">
+                                {formatCurrency(pricing.basePrice)} x{" "}
+                                {sel.quantity} {product.unit}
+                              </p>
+                            )}
                           </div>
                         </div>
                         <div className="text-right">
@@ -651,10 +825,31 @@ export function NewOrderDialog({
                           <p className="text-xs text-text-muted">
                             {product.unit}
                           </p>
+                          {lineTotal !== null && (
+                            <p className="text-xs font-medium text-text-secondary tabular-nums mt-0.5">
+                              {formatCurrency(lineTotal)}
+                            </p>
+                          )}
                         </div>
                       </div>
                     );
                   })}
+
+                  {/* Estimated subtotal */}
+                  <div className="flex items-center justify-between rounded-lg border border-citro-orange/20 bg-citro-orange/[0.03] p-4">
+                    <span className="text-sm font-medium text-text-secondary">
+                      Estimated Subtotal
+                    </span>
+                    <span className="text-lg font-bold text-text-primary tabular-nums">
+                      {formatCurrency(estimatedSubtotal)}
+                    </span>
+                  </div>
+
+                  {/* Tier discount info */}
+                  <p className="text-[10px] text-text-muted flex items-center gap-1">
+                    <Info className="h-3 w-3 shrink-0" />
+                    Premier/Elite partners receive preferred pricing.
+                  </p>
                 </div>
 
                 {/* Project Details Summary */}
@@ -737,6 +932,55 @@ export function NewOrderDialog({
                       </p>
                     </div>
                   )}
+
+                {/* Shipping Address Summary */}
+                <div className="space-y-3">
+                  <h4 className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
+                    Shipping
+                  </h4>
+                  <div className="rounded-lg border border-border p-4 bg-secondary-bg/30">
+                    <div className="flex items-start gap-2">
+                      <Truck className="h-3.5 w-3.5 text-text-muted mt-0.5 shrink-0" />
+                      <div>
+                        <p className="text-xs text-text-muted">
+                          Shipping Address
+                        </p>
+                        {resolvedShippingAddress ? (
+                          <p className="text-sm text-text-primary">
+                            {resolvedShippingAddress}
+                            {shipToProjectAddress && (
+                              <span className="text-[10px] text-text-muted ml-1.5">
+                                (same as project)
+                              </span>
+                            )}
+                          </p>
+                        ) : (
+                          <p className="text-sm text-text-muted italic">
+                            No shipping address provided
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Delivery estimate and disclaimer */}
+                <div className="space-y-2 pt-2">
+                  <div className="flex items-center gap-2 text-xs text-text-secondary">
+                    <Truck className="h-3.5 w-3.5 text-forest-teal shrink-0" />
+                    <span>
+                      Estimated delivery:{" "}
+                      <strong>
+                        {LEAD_TIME_DAYS.min}-{LEAD_TIME_DAYS.max} business days
+                      </strong>{" "}
+                      after order confirmation
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-text-muted leading-relaxed">
+                    Prices shown are estimates. Final pricing and invoice will be
+                    provided upon order confirmation.
+                  </p>
+                </div>
               </motion.div>
             )}
           </AnimatePresence>

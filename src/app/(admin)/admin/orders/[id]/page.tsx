@@ -23,5 +23,45 @@ export default async function AdminOrderDetailPage({ params }: OrderDetailPagePr
     notFound();
   }
 
-  return <OrderDetailAdmin order={JSON.parse(JSON.stringify(order))} />;
+  // Serialize dates and include new fields for the client component
+  const serializedOrder = {
+    id: order.id,
+    orderNumber: order.orderNumber,
+    status: order.status,
+    projectName: order.projectName,
+    projectAddress: order.projectAddress,
+    shippingAddress: (order as any).shippingAddress ?? null,
+    estimatedInstallDate: order.estimatedInstallDate?.toISOString() ?? null,
+    partnerNotes: order.partnerNotes,
+    adminNotes: order.adminNotes,
+    trackingNumber: (order as any).trackingNumber ?? null,
+    paymentStatus: (order as any).paymentStatus ?? null,
+    invoiceNumber: (order as any).invoiceNumber ?? null,
+    estimatedShipDate: (order as any).estimatedShipDate
+      ? new Date((order as any).estimatedShipDate).toISOString()
+      : null,
+    submittedAt: order.submittedAt.toISOString(),
+    confirmedAt: order.confirmedAt?.toISOString() ?? null,
+    shippedAt: order.shippedAt?.toISOString() ?? null,
+    deliveredAt: order.deliveredAt?.toISOString() ?? null,
+    createdAt: order.createdAt.toISOString(),
+    items: order.items.map((item: typeof order.items[number]) => ({
+      id: item.id,
+      product: item.product,
+      quantity: item.quantity,
+      notes: item.notes,
+    })),
+    partner: {
+      id: order.partner.id,
+      firstName: order.partner.firstName,
+      lastName: order.partner.lastName,
+      companyName: order.partner.companyName,
+      email: order.partner.email,
+      phone: order.partner.phone,
+      tier: order.partner.tier,
+      status: order.partner.status,
+    },
+  };
+
+  return <OrderDetailAdmin order={serializedOrder} />;
 }
