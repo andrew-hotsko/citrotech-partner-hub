@@ -11,7 +11,7 @@ export default function SignInPage() {
           <img
             src="/logo.png"
             alt="CitroTech"
-            className="h-14 w-auto object-contain mb-4"
+            className="h-14 w-auto object-contain mb-4 mx-auto"
           />
 
           <p className="text-lg font-medium text-neutral-400 uppercase tracking-[0.2em] mb-8 font-display">
