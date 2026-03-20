@@ -8,10 +8,11 @@ export default function SignInPage() {
       {/* Left Panel - Branding (hidden on mobile) */}
       <div className="hidden lg:flex lg:w-1/2 flex-col items-center justify-center bg-near-black px-12">
         <div className="max-w-md text-center">
-          <h1 className="text-5xl font-bold tracking-tight mb-4 font-display">
-            <span className="text-citro-orange">Citro</span>
-            <span className="text-white">Tech</span>
-          </h1>
+          <img
+            src="/logo.png"
+            alt="CitroTech"
+            className="h-14 w-auto object-contain mb-4"
+          />
 
           <p className="text-lg font-medium text-neutral-400 uppercase tracking-[0.2em] mb-8 font-display">
             Certified Partner Hub
