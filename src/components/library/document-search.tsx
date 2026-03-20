@@ -84,7 +84,7 @@ export function DocumentSearch({ documents, categoryName }: DocumentSearchProps)
       {/* Back link + search row */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-3">
         <Link href="/library">
-          <Button variant="ghost" size="sm" className="gap-1.5 text-text-secondary">
+          <Button variant="ghost" size="sm" className="gap-1.5 text-text-secondary -ml-3">
             <ArrowLeft className="h-4 w-4" />
             Back to Library
           </Button>

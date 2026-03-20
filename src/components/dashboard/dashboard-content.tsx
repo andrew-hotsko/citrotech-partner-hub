@@ -150,7 +150,7 @@ function StatCard({
         transition={{ duration: 0.2, ease: "easeOut" }}
       >
         <Card className="hover:shadow-lg transition-shadow duration-300 cursor-pointer group h-full border border-border/50 hover:border-border">
-          <CardContent className="p-5">
+          <CardContent className="!p-5">
             <div className="flex items-center justify-between">
               <div className="space-y-1">
                 <p className="text-sm font-medium text-text-secondary">{label}</p>
@@ -205,23 +205,25 @@ function QuickActionCard({
         transition={{ duration: 0.2, ease: "easeOut" }}
       >
         <Card className="hover:shadow-md transition-shadow duration-300 cursor-pointer h-full border border-border/50 hover:border-border">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div
-              className={cn(
-                "flex items-center justify-center w-10 h-10 rounded-full shrink-0",
-                iconBg
-              )}
-            >
-              <Icon className={cn("h-5 w-5", iconColor)} />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2">
-                <p className="text-sm font-semibold text-text-primary">{title}</p>
-                {badge}
+          <CardContent className="!p-4">
+            <div className="flex items-center gap-3">
+              <div
+                className={cn(
+                  "flex items-center justify-center w-10 h-10 rounded-full shrink-0",
+                  iconBg
+                )}
+              >
+                <Icon className={cn("h-5 w-5", iconColor)} />
               </div>
-              <p className="text-xs text-text-muted mt-0.5">{description}</p>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-semibold text-text-primary">{title}</p>
+                  {badge}
+                </div>
+                <p className="text-xs text-text-muted mt-0.5">{description}</p>
+              </div>
+              <ChevronRight className="h-4 w-4 text-text-muted shrink-0" />
             </div>
-            <ChevronRight className="h-4 w-4 text-text-muted shrink-0" />
           </CardContent>
         </Card>
       </motion.div>
