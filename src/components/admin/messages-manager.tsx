@@ -247,7 +247,7 @@ export function MessagesManager({ conversations }: MessagesManagerProps) {
                 <motion.div key={conversation.id} variants={listItem}>
                   <Link href={`/admin/messages/${conversation.id}`}>
                     <Card className="hover:shadow-md transition-shadow cursor-pointer group">
-                      <CardContent className="p-4 sm:p-5">
+                      <CardContent className="!p-4 sm:!p-5">
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0 flex-1 space-y-1">
                             <div className="flex items-center gap-2">

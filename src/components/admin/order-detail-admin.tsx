@@ -605,7 +605,7 @@ export function OrderDetailAdmin({ order }: OrderDetailAdminProps) {
             <Card>
               <CardHeader>
                 <CardTitle className="text-base flex items-center gap-2">
-                  <MapPin className="h-4 w-4 text-forest-teal" />
+                  <MapPin className="h-4 w-4 text-forest-teal shrink-0" />
                   Project Details
                 </CardTitle>
               </CardHeader>
@@ -665,7 +665,7 @@ export function OrderDetailAdmin({ order }: OrderDetailAdminProps) {
               <Card>
                 <CardHeader>
                   <CardTitle className="text-base flex items-center gap-2">
-                    <Home className="h-4 w-4 text-forest-teal" />
+                    <Home className="h-4 w-4 text-forest-teal shrink-0" />
                     Shipping Address
                   </CardTitle>
                 </CardHeader>
@@ -681,7 +681,7 @@ export function OrderDetailAdmin({ order }: OrderDetailAdminProps) {
             <Card>
               <CardHeader>
                 <CardTitle className="text-base flex items-center gap-2">
-                  <Package className="h-4 w-4 text-forest-teal" />
+                  <Package className="h-4 w-4 text-forest-teal shrink-0" />
                   Products Ordered
                 </CardTitle>
               </CardHeader>
@@ -743,7 +743,7 @@ export function OrderDetailAdmin({ order }: OrderDetailAdminProps) {
             <Card>
               <CardHeader>
                 <CardTitle className="text-base flex items-center gap-2">
-                  <DollarSign className="h-4 w-4 text-forest-teal" />
+                  <DollarSign className="h-4 w-4 text-forest-teal shrink-0" />
                   Estimated Pricing (for reference)
                 </CardTitle>
               </CardHeader>
@@ -787,7 +787,7 @@ export function OrderDetailAdmin({ order }: OrderDetailAdminProps) {
             <Card>
               <CardHeader>
                 <CardTitle className="text-base flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-forest-teal" />
+                  <Calendar className="h-4 w-4 text-forest-teal shrink-0" />
                   Timeline
                 </CardTitle>
               </CardHeader>
@@ -832,7 +832,7 @@ export function OrderDetailAdmin({ order }: OrderDetailAdminProps) {
             <Card>
               <CardHeader>
                 <CardTitle className="text-base flex items-center gap-2">
-                  <ClipboardList className="h-4 w-4 text-citro-orange" />
+                  <ClipboardList className="h-4 w-4 text-citro-orange shrink-0" />
                   Update Status
                 </CardTitle>
               </CardHeader>
@@ -919,7 +919,7 @@ export function OrderDetailAdmin({ order }: OrderDetailAdminProps) {
             <Card>
               <CardHeader>
                 <CardTitle className="text-base flex items-center gap-2">
-                  <Receipt className="h-4 w-4 text-citro-orange" />
+                  <Receipt className="h-4 w-4 text-citro-orange shrink-0" />
                   Invoice & Payment
                 </CardTitle>
               </CardHeader>
@@ -1006,7 +1006,7 @@ export function OrderDetailAdmin({ order }: OrderDetailAdminProps) {
             <Card>
               <CardHeader>
                 <CardTitle className="text-base flex items-center gap-2">
-                  <MessageSquare className="h-4 w-4 text-citro-orange" />
+                  <MessageSquare className="h-4 w-4 text-citro-orange shrink-0" />
                   Notes & Tracking
                 </CardTitle>
               </CardHeader>
@@ -1062,7 +1062,7 @@ export function OrderDetailAdmin({ order }: OrderDetailAdminProps) {
             <Card>
               <CardHeader>
                 <CardTitle className="text-base flex items-center gap-2">
-                  <Building2 className="h-4 w-4 text-forest-teal" />
+                  <Building2 className="h-4 w-4 text-forest-teal shrink-0" />
                   Partner Information
                 </CardTitle>
               </CardHeader>

@@ -423,7 +423,7 @@ export function AnnouncementsManager({
                       isExpiringSoon && "ring-1 ring-amber-400/30"
                     )}
                   >
-                    <CardContent className="p-4 sm:p-5">
+                    <CardContent className="!p-4 sm:!p-5">
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0 flex-1 space-y-1.5">
                           <div className="flex items-center gap-2 flex-wrap">
@@ -699,7 +699,7 @@ export function AnnouncementsManager({
                   TYPE_CONFIG[formType].borderColor
                 )}
               >
-                <CardContent className="p-5 space-y-3">
+                <CardContent className="!p-5 space-y-3">
                   <div className="flex items-center gap-2 flex-wrap">
                     {formIsPinned && (
                       <Pin className="h-3.5 w-3.5 text-citro-orange shrink-0" />

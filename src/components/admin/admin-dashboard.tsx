@@ -114,7 +114,7 @@ function KpiCard({ label, value, icon: Icon, iconBg, iconColor, href, subtitle }
         transition={{ duration: 0.2, ease: "easeOut" }}
       >
         <Card className="hover:shadow-lg transition-shadow duration-300 cursor-pointer group h-full border border-border/50 hover:border-border">
-          <CardContent className="p-5">
+          <CardContent className="!p-5">
             <div className="flex items-center justify-between">
               <div className="space-y-1">
                 <p className="text-sm font-medium text-text-secondary">{label}</p>
@@ -165,7 +165,7 @@ function QuickAction({
         transition={{ duration: 0.2, ease: "easeOut" }}
       >
         <Card className="hover:shadow-md transition-shadow duration-300 cursor-pointer h-full border border-border/50 hover:border-border group">
-          <CardContent className="p-4 flex items-center gap-3">
+          <CardContent className="!p-4 flex items-center gap-3">
             <div
               className={cn(
                 "flex items-center justify-center w-10 h-10 rounded-full shrink-0",
