@@ -360,7 +360,7 @@ export function ProfileContent({ partner }: ProfileContentProps) {
       }
 
       const data = await res.json();
-      setCurrentPartner((prev) => ({ ...prev, logoUrl: data.logoUrl }));
+      setCurrentPartner((prev) => ({ ...prev, logoUrl: data.url }));
       toast.success("Logo uploaded successfully");
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to upload logo";
