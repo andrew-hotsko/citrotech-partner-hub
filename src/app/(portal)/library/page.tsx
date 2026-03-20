@@ -187,9 +187,9 @@ export default async function LibraryPage() {
                   <Link key={category.id} href={`/library/${category.slug}`}>
                     <Card className="h-full hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer group">
                       <CardContent className="p-5">
-                        <div className="flex gap-4">
+                        <div className="flex items-center gap-4">
                           <div
-                            className={`shrink-0 self-start mt-0.5 rounded-full p-3 ring-1 transition-all duration-200 group-hover:scale-110 ${colors.bg} ${colors.ring}`}
+                            className={`shrink-0 rounded-full p-2.5 ring-1 transition-all duration-200 group-hover:scale-110 ${colors.bg} ${colors.ring}`}
                           >
                             <Icon className={`h-5 w-5 ${colors.text}`} />
                           </div>
@@ -198,7 +198,7 @@ export default async function LibraryPage() {
                               <h3 className="text-sm font-semibold text-text-primary font-display group-hover:text-citro-orange transition-colors">
                                 {category.name}
                               </h3>
-                              <Badge variant="outline" className="text-[10px] tabular-nums">
+                              <Badge variant="outline" className="text-[10px] tabular-nums shrink-0">
                                 {category._count.documents} {category._count.documents === 1 ? "doc" : "docs"}
                               </Badge>
                             </div>

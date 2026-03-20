@@ -80,6 +80,8 @@ export async function POST(req: NextRequest) {
 
     const blob = await put(file.name, file, {
       access: "public",
+      allowOverwrite: true,
+      token: process.env.BLOB_READ_WRITE_TOKEN,
     });
 
     return NextResponse.json({
