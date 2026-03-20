@@ -139,9 +139,9 @@ export default async function LibraryPage() {
                   className="group"
                 >
                   <Card className="h-full hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 border-citro-orange/20 bg-citro-orange/[0.03]">
-                    <CardContent className="p-4">
+                    <CardContent className="!p-4">
                       <div className="flex items-center gap-3">
-                        <div className="shrink-0 rounded-full bg-citro-orange/15 p-2 ring-1 ring-citro-orange/20">
+                        <div className="flex items-center justify-center w-9 h-9 shrink-0 rounded-full bg-citro-orange/15 ring-1 ring-citro-orange/20">
                           <FileText className="h-4 w-4 text-citro-orange" />
                         </div>
                         <div className="min-w-0 flex-1">
@@ -185,11 +185,11 @@ export default async function LibraryPage() {
                 const latestDoc = category.documents[0];
                 return (
                   <Link key={category.id} href={`/library/${category.slug}`}>
-                    <Card className="h-full hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer group">
-                      <CardContent className="p-5">
-                        <div className="flex items-center gap-4">
+                    <Card className="h-full hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer group overflow-hidden">
+                      <CardContent className="!p-5">
+                        <div className="flex items-center gap-3">
                           <div
-                            className={`shrink-0 rounded-full p-2.5 ring-1 transition-all duration-200 group-hover:scale-110 ${colors.bg} ${colors.ring}`}
+                            className={`flex items-center justify-center w-10 h-10 shrink-0 rounded-full ring-1 ${colors.bg} ${colors.ring}`}
                           >
                             <Icon className={`h-5 w-5 ${colors.text}`} />
                           </div>
