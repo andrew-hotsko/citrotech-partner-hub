@@ -2,6 +2,7 @@
 
 import React, { useState, useCallback } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   ArrowLeft,
@@ -14,6 +15,10 @@ import {
   Shield,
   Calendar,
   Loader2,
+  AlertTriangle,
+  Ban,
+  CheckCircle,
+  Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { PageTransition } from "@/components/layout/page-transition";
@@ -21,8 +26,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { formatDate, formatRelativeTime } from "@/lib/format";
 import { updatePartner } from "@/app/(admin)/admin/partners/[id]/actions";
@@ -140,10 +154,18 @@ const itemVariants = {
 /* ------------------------------------------------------------------ */
 
 export function PartnerDetail({ partner }: PartnerDetailProps) {
+  const router = useRouter();
   const [tier, setTier] = useState(partner.tier);
   const [status, setStatus] = useState(partner.status);
   const [certNotes, setCertNotes] = useState(partner.certificationNotes ?? "");
   const [saving, setSaving] = useState(false);
+
+  // Danger zone state
+  const [deactivateOpen, setDeactivateOpen] = useState(false);
+  const [deactivating, setDeactivating] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
 
   const hasChanges =
     tier !== partner.tier ||
@@ -171,6 +193,57 @@ export function PartnerDetail({ partner }: PartnerDetailProps) {
       setSaving(false);
     }
   }, [partner.id, tier, status, certNotes]);
+
+  const isActive = partner.status === "ACTIVE";
+
+  const handleDeactivateToggle = useCallback(async () => {
+    setDeactivating(true);
+    const newStatus = isActive ? "INACTIVE" : "ACTIVE";
+    try {
+      const res = await fetch(`/api/admin/partners/${partner.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || "Failed to update partner status.");
+        return;
+      }
+      toast.success(
+        newStatus === "INACTIVE"
+          ? "Partner has been deactivated."
+          : "Partner has been reactivated."
+      );
+      setDeactivateOpen(false);
+      router.refresh();
+    } catch {
+      toast.error("An unexpected error occurred.");
+    } finally {
+      setDeactivating(false);
+    }
+  }, [partner.id, isActive, router]);
+
+  const handleDelete = useCallback(async () => {
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/admin/partners/${partner.id}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || "Failed to delete partner.");
+        return;
+      }
+      toast.success("Partner has been permanently deleted.");
+      setDeleteOpen(false);
+      router.push("/admin/partners");
+    } catch {
+      toast.error("An unexpected error occurred.");
+    } finally {
+      setDeleting(false);
+    }
+  }, [partner.id, router]);
 
   const tierInfo = tierConfig[tier];
   const statusInfo = statusConfig[status];
@@ -439,6 +512,169 @@ export function PartnerDetail({ partner }: PartnerDetailProps) {
             </Card>
           </motion.div>
         </div>
+
+        {/* Danger Zone */}
+        <motion.div variants={itemVariants}>
+          <Card className="border-red-300 dark:border-red-500/30">
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2 text-red-600 dark:text-red-400">
+                <AlertTriangle className="h-4 w-4 shrink-0" />
+                Danger Zone
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Deactivate / Reactivate */}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 rounded-lg border border-border">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-text-primary">
+                    {isActive ? "Deactivate Partner" : "Reactivate Partner"}
+                  </p>
+                  <p className="text-xs text-text-muted mt-0.5">
+                    {isActive
+                      ? "The partner will be banned from signing in and their account will be marked as inactive."
+                      : "The partner will be unbanned and able to sign in again."}
+                  </p>
+                </div>
+                <Dialog open={deactivateOpen} onOpenChange={setDeactivateOpen}>
+                  <Button
+                    variant={isActive ? "outline" : "outline"}
+                    size="sm"
+                    className={cn(
+                      "shrink-0",
+                      isActive
+                        ? "border-amber-500 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-500/10"
+                        : "border-emerald-500 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-500/10"
+                    )}
+                    onClick={() => setDeactivateOpen(true)}
+                  >
+                    {isActive ? (
+                      <>
+                        <Ban className="h-4 w-4" />
+                        Deactivate
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="h-4 w-4" />
+                        Reactivate
+                      </>
+                    )}
+                  </Button>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>
+                        {isActive ? "Deactivate Partner" : "Reactivate Partner"}
+                      </DialogTitle>
+                      <DialogDescription>
+                        {isActive
+                          ? `Are you sure you want to deactivate ${partner.firstName} ${partner.lastName}? They will be banned from signing in and will not be able to access the partner portal.`
+                          : `Are you sure you want to reactivate ${partner.firstName} ${partner.lastName}? They will be unbanned and able to sign in again.`}
+                      </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setDeactivateOpen(false)}
+                        disabled={deactivating}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        variant={isActive ? "destructive" : "secondary"}
+                        size="sm"
+                        onClick={handleDeactivateToggle}
+                        loading={deactivating}
+                        disabled={deactivating}
+                      >
+                        {isActive ? "Deactivate" : "Reactivate"}
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </div>
+
+              {/* Delete */}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 rounded-lg border border-red-300 dark:border-red-500/30">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-text-primary">Delete Partner</p>
+                  <p className="text-xs text-text-muted mt-0.5">
+                    Permanently delete this partner and all their data including orders,
+                    conversations, and messages. This action cannot be undone.
+                  </p>
+                </div>
+                <Dialog
+                  open={deleteOpen}
+                  onOpenChange={(open) => {
+                    setDeleteOpen(open);
+                    if (!open) setDeleteConfirmText("");
+                  }}
+                >
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    className="shrink-0"
+                    onClick={() => setDeleteOpen(true)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Delete Partner
+                  </Button>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Delete Partner Permanently</DialogTitle>
+                      <DialogDescription>
+                        This will permanently delete{" "}
+                        <strong>
+                          {partner.firstName} {partner.lastName}
+                        </strong>{" "}
+                        and all associated data including orders, conversations, and
+                        messages. The user will also be removed from Clerk. This action
+                        cannot be undone.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="px-6 pb-2 space-y-2">
+                      <Label htmlFor="delete-confirm" className="text-xs text-text-secondary">
+                        Type <span className="font-mono font-semibold text-text-primary">{partner.email}</span> to confirm
+                      </Label>
+                      <Input
+                        id="delete-confirm"
+                        placeholder={partner.email}
+                        value={deleteConfirmText}
+                        onChange={(e) => setDeleteConfirmText(e.target.value)}
+                        error={
+                          deleteConfirmText.length > 0 &&
+                          deleteConfirmText !== partner.email
+                        }
+                      />
+                    </div>
+                    <DialogFooter>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setDeleteOpen(false);
+                          setDeleteConfirmText("");
+                        }}
+                        disabled={deleting}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={handleDelete}
+                        loading={deleting}
+                        disabled={deleting || deleteConfirmText !== partner.email}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        Delete Forever
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
       </motion.div>
     </PageTransition>
   );
