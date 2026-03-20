@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { formatDate, formatRelativeTime } from "@/lib/format";
+import { InvitePartnerDialog } from "@/components/admin/invite-partner-dialog";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -147,42 +148,52 @@ function KpiCard({ label, value, icon: Icon, iconBg, iconColor, href, subtitle }
 
 function QuickAction({
   href,
+  onClick,
   icon: Icon,
   title,
   iconBg,
   iconColor,
 }: {
-  href: string;
+  href?: string;
+  onClick?: () => void;
   icon: LucideIcon;
   title: string;
   iconBg: string;
   iconColor: string;
 }) {
-  return (
-    <Link href={href}>
-      <motion.div
-        whileHover={{ y: -2 }}
-        transition={{ duration: 0.2, ease: "easeOut" }}
-      >
-        <Card className="hover:shadow-md transition-shadow duration-300 cursor-pointer h-full border border-border/50 hover:border-border group">
-          <CardContent className="!p-4 flex items-center gap-3">
-            <div
-              className={cn(
-                "flex items-center justify-center w-10 h-10 rounded-full shrink-0",
-                iconBg
-              )}
-            >
-              <Icon className={cn("h-5 w-5", iconColor)} />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-text-primary">{title}</p>
-            </div>
-            <ChevronRight className="h-4 w-4 text-text-muted opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
-          </CardContent>
-        </Card>
-      </motion.div>
-    </Link>
+  const content = (
+    <motion.div
+      whileHover={{ y: -2 }}
+      transition={{ duration: 0.2, ease: "easeOut" }}
+    >
+      <Card className="hover:shadow-md transition-shadow duration-300 cursor-pointer h-full border border-border/50 hover:border-border group">
+        <CardContent className="!p-4 flex items-center gap-3">
+          <div
+            className={cn(
+              "flex items-center justify-center w-10 h-10 rounded-full shrink-0",
+              iconBg
+            )}
+          >
+            <Icon className={cn("h-5 w-5", iconColor)} />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-text-primary">{title}</p>
+          </div>
+          <ChevronRight className="h-4 w-4 text-text-muted opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+        </CardContent>
+      </Card>
+    </motion.div>
   );
+
+  if (onClick) {
+    return (
+      <button type="button" onClick={onClick} className="text-left w-full">
+        {content}
+      </button>
+    );
+  }
+
+  return <Link href={href!}>{content}</Link>;
 }
 
 /* ------------------------------------------------------------------ */
@@ -194,6 +205,8 @@ export function AdminDashboard({
   recentOrders,
   recentConversations,
 }: AdminDashboardProps) {
+  const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
+
   return (
     <PageTransition>
       <motion.div
@@ -264,9 +277,9 @@ export function AdminDashboard({
           <h2 className="text-lg font-semibold text-text-primary mb-3">Quick Actions</h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <QuickAction
-              href="/admin/partners?action=create"
+              onClick={() => setInviteDialogOpen(true)}
               icon={UserPlus}
-              title="Add Partner"
+              title="Invite Partner"
               iconBg="bg-forest-teal/10"
               iconColor="text-forest-teal"
             />
@@ -435,6 +448,11 @@ export function AdminDashboard({
           </motion.div>
         </div>
       </motion.div>
+
+      <InvitePartnerDialog
+        open={inviteDialogOpen}
+        onOpenChange={setInviteDialogOpen}
+      />
     </PageTransition>
   );
 }

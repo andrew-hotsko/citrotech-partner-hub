@@ -2,6 +2,7 @@ import { Webhook } from "svix";
 import { headers } from "next/headers";
 import { WebhookEvent } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
+import { sendWelcomeEmail } from "@/lib/email";
 
 export async function POST(req: Request) {
   const WEBHOOK_SECRET = process.env.CLERK_WEBHOOK_SECRET;
@@ -59,7 +60,7 @@ export async function POST(req: Request) {
 
         if (preCreated) {
           // Link the existing partner record to this Clerk user
-          await db.partner.update({
+          const linkedPartner = await db.partner.update({
             where: { email: primaryEmail },
             data: {
               clerkUserId: id,
@@ -68,9 +69,21 @@ export async function POST(req: Request) {
             },
           });
           console.log(`Linked pre-created partner to Clerk user: ${id}`);
+
+          // Send welcome email (only if not already sent during invitation)
+          // Pre-created partners from the invite flow already received a welcome email,
+          // so we skip it here to avoid duplicates. We detect this via the placeholder prefix.
+          if (!preCreated.clerkUserId.startsWith("pending_")) {
+            await sendWelcomeEmail({
+              firstName: linkedPartner.firstName,
+              lastName: linkedPartner.lastName,
+              email: linkedPartner.email,
+              companyName: linkedPartner.companyName,
+            });
+          }
         } else {
           // Create a new partner record
-          await db.partner.create({
+          const newPartner = await db.partner.create({
             data: {
               clerkUserId: id,
               email: primaryEmail,
@@ -80,6 +93,14 @@ export async function POST(req: Request) {
             },
           });
           console.log(`Partner created for Clerk user: ${id}`);
+
+          // Send welcome email for directly-created users
+          await sendWelcomeEmail({
+            firstName: newPartner.firstName,
+            lastName: newPartner.lastName,
+            email: newPartner.email,
+            companyName: newPartner.companyName,
+          });
         }
 
         break;

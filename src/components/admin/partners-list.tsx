@@ -9,6 +9,7 @@ import {
   ChevronRight,
   Plus,
   UserPlus,
+  Send,
   X,
   AlertTriangle,
 } from "lucide-react";
@@ -31,6 +32,7 @@ import {
 import { Select } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { formatDate } from "@/lib/format";
+import { InvitePartnerDialog } from "@/components/admin/invite-partner-dialog";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -136,6 +138,9 @@ export function PartnersList({ partners }: PartnersListProps) {
   const [tierFilter, setTierFilter] = useState<TierFilter>("ALL");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("ALL");
 
+  // Invite Partner dialog state
+  const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
+
   // Create Partner dialog state
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -239,15 +244,24 @@ export function PartnersList({ partners }: PartnersListProps) {
           title="Partners"
           description={`${partners.length} total partners`}
         >
-          <Button
-            onClick={() => {
-              resetCreateForm();
-              setCreateDialogOpen(true);
-            }}
-          >
-            <UserPlus className="h-4 w-4" />
-            Create Partner
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                resetCreateForm();
+                setCreateDialogOpen(true);
+              }}
+            >
+              <Plus className="h-4 w-4" />
+              Create Partner
+            </Button>
+            <Button
+              onClick={() => setInviteDialogOpen(true)}
+            >
+              <Send className="h-4 w-4" />
+              Invite Partner
+            </Button>
+          </div>
         </PageHeader>
 
         {/* Search and Filters */}
@@ -605,6 +619,12 @@ export function PartnersList({ partners }: PartnersListProps) {
             </form>
           </DialogContent>
         </Dialog>
+
+        {/* Invite Partner Dialog */}
+        <InvitePartnerDialog
+          open={inviteDialogOpen}
+          onOpenChange={setInviteDialogOpen}
+        />
       </div>
     </PageTransition>
   );
