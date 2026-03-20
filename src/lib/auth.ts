@@ -53,7 +53,30 @@ export async function requirePartner() {
     redirect("/");
   }
 
-  const partner = await getPartnerByClerkId(userId);
+  let partner = await getPartnerByClerkId(userId);
+
+  // If no partner found by Clerk ID, try to find by email and link them.
+  // This handles the race condition where a partner was invited (pending_ prefix)
+  // but the webhook hasn't fired yet to update the clerkUserId.
+  if (!partner) {
+    const user = await currentUser();
+    const email = user?.emailAddresses?.[0]?.emailAddress;
+
+    if (email) {
+      const pendingPartner = await db.partner.findUnique({
+        where: { email },
+      });
+
+      if (pendingPartner && pendingPartner.clerkUserId.startsWith("pending_")) {
+        // Link the pre-created partner to this Clerk user
+        partner = await db.partner.update({
+          where: { email },
+          data: { clerkUserId: userId },
+        });
+      }
+    }
+  }
+
   if (!partner) {
     // Admin users without a Partner record should go to the admin dashboard
     if (role === "admin") {
