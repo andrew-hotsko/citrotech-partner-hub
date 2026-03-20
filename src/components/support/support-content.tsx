@@ -39,28 +39,28 @@ import { cn } from "@/lib/utils";
 
 const contacts = [
   {
-    name: "Sarah Chen",
+    name: "Dave Reese",
     role: "Partner Program Manager",
     description: "Partnership inquiries, certification, and training coordination",
-    email: "sarah.chen@citrotech.com",
+    email: "dave.reese@citrotech.com",
     icon: User,
     color: "text-citro-orange",
     bgColor: "bg-citro-orange/10",
   },
   {
-    name: "Mike Rodriguez",
+    name: "Aaron Good",
     role: "Technical Support",
     description: "Product specifications, installation guidance, and troubleshooting",
-    email: "mike.rodriguez@citrotech.com",
+    email: "aaron.good@citrotech.com",
     icon: Wrench,
     color: "text-forest-teal",
     bgColor: "bg-forest-teal/10",
   },
   {
-    name: "Lisa Park",
+    name: "Jason Reynolds",
     role: "Orders & Logistics",
     description: "Order status, shipping updates, and delivery coordination",
-    email: "lisa.park@citrotech.com",
+    email: "jason.reynolds@citrotech.com",
     icon: Package,
     color: "text-blue-600",
     bgColor: "bg-blue-500/10",
@@ -71,7 +71,7 @@ const faqItems = [
   {
     question: "How do I place a bulk order?",
     answer:
-      "Navigate to the Orders page and click 'New Order'. For bulk orders (50+ units), select the 'Bulk Order' option to access volume pricing. You can also contact Lisa Park directly for custom bulk arrangements and delivery scheduling.",
+      "Navigate to the Orders page and click 'New Order'. For bulk orders (50+ units), select the 'Bulk Order' option to access volume pricing. You can also contact Jason Reynolds directly for custom bulk arrangements and delivery scheduling.",
   },
   {
     question: "What's the difference between MFB-31 and MFB-34?",
@@ -81,17 +81,17 @@ const faqItems = [
   {
     question: "How do I renew my certification?",
     answer:
-      "Your certification status and expiration date are shown on your Profile page. To renew, complete the online recertification module available in the Training section at least 30 days before expiration. If your certification has already lapsed, contact Sarah Chen to arrange an in-person or virtual recertification session.",
+      "Your certification status and expiration date are shown on your Profile page. To renew, complete the online recertification module available in the Training section at least 30 days before expiration. If your certification has already lapsed, contact Dave Reese to arrange an in-person or virtual recertification session.",
   },
   {
     question: "What are the shipping timelines?",
     answer:
-      "Standard orders ship within 3-5 business days. Bulk orders (50+ units) typically ship within 7-10 business days. Emergency/expedited shipping is available for active fire situations -- contact Lisa Park or call the Emergency Hotline for same-day dispatch. All shipments include tracking information sent to your registered email.",
+      "Standard orders ship within 3-5 business days. Bulk orders (50+ units) typically ship within 7-10 business days. Emergency/expedited shipping is available for active fire situations -- contact Jason Reynolds or call the Emergency Hotline for same-day dispatch. All shipments include tracking information sent to your registered email.",
   },
   {
     question: "How do I access my order history?",
     answer:
-      "Go to the Orders page to view your complete order history, including order status, tracking numbers, and invoices. You can filter by date range, status, and product type. For orders placed before your portal account was created, contact Lisa Park for historical records.",
+      "Go to the Orders page to view your complete order history, including order status, tracking numbers, and invoices. You can filter by date range, status, and product type. For orders placed before your portal account was created, contact Jason Reynolds for historical records.",
   },
   {
     question: "How do I download marketing materials?",
@@ -164,18 +164,15 @@ export function SupportContent() {
               <Phone className="h-5 w-5" aria-hidden="true" />
               1-800-CITRO-911
             </a>
-            <div className="flex flex-col sm:flex-row gap-2 text-sm text-text-secondary">
-              <div className="flex items-center gap-2">
+            <div className="flex flex-col gap-2 text-sm text-text-secondary">
+              <a
+                href="mailto:emergency@citrotech.com"
+                className="inline-flex items-center gap-2 hover:text-red-600 transition-colors"
+              >
                 <Mail className="h-4 w-4 shrink-0 text-red-500" aria-hidden="true" />
-                <a
-                  href="mailto:emergency@citrotech.com"
-                  className="hover:text-red-600 transition-colors"
-                >
-                  emergency@citrotech.com
-                </a>
-              </div>
-              <span className="hidden sm:inline text-text-muted" aria-hidden="true">&middot;</span>
-              <div className="flex items-center gap-2">
+                emergency@citrotech.com
+              </a>
+              <div className="inline-flex items-center gap-2">
                 <Siren className="h-4 w-4 shrink-0 text-red-500" aria-hidden="true" />
                 <span>For expedited emergency shipments and field support</span>
               </div>
