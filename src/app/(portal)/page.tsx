@@ -28,6 +28,14 @@ export default async function DashboardPage() {
     }),
   ]);
 
+  const profileComplete = Boolean(
+    partner.phone?.trim() &&
+    partner.address?.trim() &&
+    partner.city?.trim() &&
+    partner.state?.trim() &&
+    partner.zip?.trim()
+  );
+
   return (
     <DashboardContent
       partner={{
@@ -40,6 +48,7 @@ export default async function DashboardPage() {
           ? partner.certExpiresAt.toISOString()
           : null,
       }}
+      profileComplete={profileComplete}
       recentOrders={recentOrders.map((order: typeof recentOrders[number]) => ({
         id: order.id,
         orderNumber: order.orderNumber,

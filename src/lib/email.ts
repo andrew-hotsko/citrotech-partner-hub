@@ -4,7 +4,22 @@ const resend = process.env.RESEND_API_KEY
   ? new Resend(process.env.RESEND_API_KEY)
   : null;
 
+if (!resend) {
+  console.warn(
+    "[EMAIL] RESEND_API_KEY is not set — all outbound emails will be skipped. " +
+    "Set this environment variable in your .env / Vercel dashboard to enable email delivery."
+  );
+}
+
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL ?? "noreply@citrotech.com";
+
+if (FROM_EMAIL === "onboarding@resend.dev") {
+  console.warn(
+    "[EMAIL] RESEND_FROM_EMAIL is set to the Resend sandbox domain (onboarding@resend.dev). " +
+    "Emails will ONLY be delivered to the Resend account owner's verified email. " +
+    "Add and verify a custom domain in Resend to send to real partners."
+  );
+}
 
 // ---------------------------------------------------------------------------
 // Shared HTML template wrapper
@@ -69,6 +84,22 @@ function getAdminNotificationEmails(): string[] {
     return envVal.split(",").map((e) => e.trim()).filter(Boolean);
   }
   return [FROM_EMAIL];
+}
+
+/**
+ * Extract and log detailed error information from Resend API errors.
+ */
+function logResendError(err: unknown) {
+  if (err && typeof err === "object") {
+    const resendErr = err as Record<string, unknown>;
+    if (resendErr.statusCode || resendErr.name || resendErr.message) {
+      console.error("[EMAIL] Resend API error details:", {
+        statusCode: resendErr.statusCode,
+        name: resendErr.name,
+        message: resendErr.message,
+      });
+    }
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -149,16 +180,21 @@ export async function sendOrderConfirmation(
     </p>
   `);
 
-  if (!resend) return;
+  if (!resend) {
+    console.warn("[EMAIL] Skipping order confirmation email — Resend client not initialized (missing RESEND_API_KEY)");
+    return;
+  }
   try {
-    await resend.emails.send({
+    const result = await resend.emails.send({
       from: FROM_EMAIL,
       to: partner.email,
       subject: `Order ${order.orderNumber} \u2014 Confirmation`,
       html,
     });
-  } catch (err) {
+    console.log(`[EMAIL] Order confirmation sent to ${partner.email} for ${order.orderNumber}`, result);
+  } catch (err: unknown) {
     console.error("Failed to send order confirmation email:", err);
+    logResendError(err);
   }
 }
 
@@ -193,16 +229,21 @@ export async function sendOrderStatusUpdate(
     </p>
   `);
 
-  if (!resend) return;
+  if (!resend) {
+    console.warn("[EMAIL] Skipping order status update email — Resend client not initialized (missing RESEND_API_KEY)");
+    return;
+  }
   try {
-    await resend.emails.send({
+    const result = await resend.emails.send({
       from: FROM_EMAIL,
       to: partner.email,
       subject: `Order ${order.orderNumber} \u2014 ${statusLabel}`,
       html,
     });
-  } catch (err) {
+    console.log(`[EMAIL] Order status update sent to ${partner.email} for ${order.orderNumber}`, result);
+  } catch (err: unknown) {
     console.error("Failed to send order status update email:", err);
+    logResendError(err);
   }
 }
 
@@ -244,20 +285,25 @@ export async function sendNewMessageNotification(
     </p>
   `);
 
-  if (!resend) return;
+  if (!resend) {
+    console.warn("[EMAIL] Skipping new message notification email — Resend client not initialized (missing RESEND_API_KEY)");
+    return;
+  }
 
   // Support sending to multiple recipients
   const recipients = Array.isArray(recipientEmail) ? recipientEmail : [recipientEmail];
 
   try {
-    await resend.emails.send({
+    const result = await resend.emails.send({
       from: FROM_EMAIL,
       to: recipients,
       subject: `New message in "${subjectLine}"`,
       html,
     });
-  } catch (err) {
+    console.log(`[EMAIL] Message notification sent to ${recipients.join(", ")}`, result);
+  } catch (err: unknown) {
     console.error("Failed to send new message notification email:", err);
+    logResendError(err);
   }
 }
 
@@ -322,16 +368,21 @@ export async function sendWelcomeEmail(
     </p>
   `);
 
-  if (!resend) return;
+  if (!resend) {
+    console.warn("[EMAIL] Skipping welcome email — Resend client not initialized (missing RESEND_API_KEY)");
+    return;
+  }
   try {
-    await resend.emails.send({
+    const result = await resend.emails.send({
       from: FROM_EMAIL,
       to: partner.email,
       subject: "Welcome to the CitroTech Partner Hub!",
       html,
     });
-  } catch (err) {
+    console.log(`[EMAIL] Welcome email sent to ${partner.email}`, result);
+  } catch (err: unknown) {
     console.error("Failed to send welcome email:", err);
+    logResendError(err);
   }
 }
 
@@ -427,16 +478,21 @@ export async function sendOrderSubmittedNotification(
     </table>
   `);
 
-  if (!resend) return;
+  if (!resend) {
+    console.warn("[EMAIL] Skipping order submitted notification — Resend client not initialized (missing RESEND_API_KEY)");
+    return;
+  }
   try {
-    await resend.emails.send({
+    const result = await resend.emails.send({
       from: FROM_EMAIL,
       to: recipients,
       subject: `[New Order] ${order.orderNumber} from ${partner.companyName ?? `${partner.firstName} ${partner.lastName}`}`,
       html,
     });
-  } catch (err) {
+    console.log(`[EMAIL] Order submitted notification sent to ${recipients.join(", ")} for ${order.orderNumber}`, result);
+  } catch (err: unknown) {
     console.error("Failed to send order submitted notification email:", err);
+    logResendError(err);
   }
 }
 
@@ -496,16 +552,21 @@ export async function sendOrderShippedNotification(
     </p>
   `);
 
-  if (!resend) return;
+  if (!resend) {
+    console.warn("[EMAIL] Skipping order shipped notification — Resend client not initialized (missing RESEND_API_KEY)");
+    return;
+  }
   try {
-    await resend.emails.send({
+    const result = await resend.emails.send({
       from: FROM_EMAIL,
       to: partner.email,
       subject: `Your Order ${order.orderNumber} Has Shipped!`,
       html,
     });
-  } catch (err) {
+    console.log(`[EMAIL] Order shipped notification sent to ${partner.email} for ${order.orderNumber}`, result);
+  } catch (err: unknown) {
     console.error("Failed to send order shipped notification email:", err);
+    logResendError(err);
   }
 }
 
@@ -571,15 +632,20 @@ export async function sendCertExpiryReminder(
     </p>
   `);
 
-  if (!resend) return;
+  if (!resend) {
+    console.warn("[EMAIL] Skipping cert expiry reminder — Resend client not initialized (missing RESEND_API_KEY)");
+    return;
+  }
   try {
-    await resend.emails.send({
+    const result = await resend.emails.send({
       from: FROM_EMAIL,
       to: partner.email,
       subject,
       html,
     });
-  } catch (err) {
+    console.log(`[EMAIL] Cert expiry reminder sent to ${partner.email}`, result);
+  } catch (err: unknown) {
     console.error("Failed to send cert expiry reminder email:", err);
+    logResendError(err);
   }
 }

@@ -12,10 +12,23 @@ export default async function OrdersPage() {
     include: { items: true },
   });
 
+  // Build full warehouse address string from individual fields
+  const warehouseAddressParts = [];
+  if (partner.warehouseSameAsBusiness) {
+    if (partner.address) warehouseAddressParts.push(partner.address);
+    const cityStateZip = [partner.city, partner.state, partner.zip].filter(Boolean).join(", ");
+    if (cityStateZip) warehouseAddressParts.push(cityStateZip);
+  } else {
+    if (partner.warehouseAddress) warehouseAddressParts.push(partner.warehouseAddress);
+    const cityStateZip = [partner.warehouseCity, partner.warehouseState, partner.warehouseZip].filter(Boolean).join(", ");
+    if (cityStateZip) warehouseAddressParts.push(cityStateZip);
+  }
+  const fullWarehouseAddress = warehouseAddressParts.length > 0 ? warehouseAddressParts.join(", ") : undefined;
+
   return (
     <Suspense>
       <OrdersList
-        warehouseAddress={partner.warehouseAddress ?? undefined}
+        warehouseAddress={fullWarehouseAddress}
         orders={orders.map((order: typeof orders[number]) => ({
           id: order.id,
           orderNumber: order.orderNumber,

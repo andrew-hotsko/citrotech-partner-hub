@@ -145,7 +145,7 @@ export function LibraryGlobalSearch({ documents }: LibraryGlobalSearchProps) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.15 }}
-            className="absolute top-full left-0 right-0 mt-2 z-30"
+            className="absolute top-full left-0 right-0 mt-2 z-30 max-h-[60vh] overflow-y-auto"
           >
             <Card className="shadow-lg border-border overflow-hidden">
               <CardContent className="p-0">

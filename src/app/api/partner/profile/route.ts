@@ -93,7 +93,7 @@ const updateProfileSchema = z.object({
   warehouseSameAsBusiness: z
     .boolean()
     .optional(),
-  preferredContact: z.enum(["phone", "email", "text"]).optional().nullable(),
+  preferredContact: z.enum(["phone", "email", "text", "Phone", "Email", "Text"]).optional().nullable(),
   serviceTerritory: z.string().max(500, "Service territory is too long").optional().nullable(),
   specializations: z.array(z.string()).optional(),
   websiteUrl: z.string().max(200, "Website URL is too long").optional().nullable(),
@@ -179,6 +179,11 @@ export async function PATCH(req: NextRequest) {
         updateData.warehouseState = current.state;
         updateData.warehouseZip = current.zip;
       }
+    }
+
+    // Normalize preferredContact to lowercase for consistency
+    if (updateData.preferredContact && typeof updateData.preferredContact === "string") {
+      updateData.preferredContact = updateData.preferredContact.toLowerCase();
     }
 
     if (Object.keys(updateData).length === 0) {

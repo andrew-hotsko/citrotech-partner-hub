@@ -96,16 +96,25 @@ export async function POST(req: Request) {
     });
 
     // ── Send branded welcome email ────────────────────────────────
-    await sendWelcomeEmail({
-      firstName: partner.firstName,
-      lastName: partner.lastName,
-      email: partner.email,
-      companyName: partner.companyName,
-    });
+    let welcomeEmailSent = false;
+    try {
+      await sendWelcomeEmail({
+        firstName: partner.firstName,
+        lastName: partner.lastName,
+        email: partner.email,
+        companyName: partner.companyName,
+      });
+      welcomeEmailSent = true;
+    } catch (emailErr) {
+      // Log but don't fail the invite — partner was created and Clerk
+      // invitation was sent, so the invite itself succeeded.
+      console.error("[INVITE] Welcome email failed (partner was still created):", emailErr);
+    }
 
     return NextResponse.json(
       {
         success: true,
+        welcomeEmailSent,
         partner: {
           id: partner.id,
           firstName: partner.firstName,

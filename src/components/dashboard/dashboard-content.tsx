@@ -13,6 +13,8 @@ import {
   Package,
   ChevronRight,
   Clock,
+  UserCog,
+  ArrowRight,
   type LucideIcon,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -55,6 +57,7 @@ interface DashboardContentProps {
   recentOrders: DashboardOrder[];
   recentAnnouncements: DashboardAnnouncement[];
   unreadMessageCount: number;
+  profileComplete: boolean;
 }
 
 /* ------------------------------------------------------------------ */
@@ -240,6 +243,7 @@ export function DashboardContent({
   recentOrders,
   recentAnnouncements,
   unreadMessageCount,
+  profileComplete,
 }: DashboardContentProps) {
   const certExpiring60 = isCertExpiringWithinDays(partner.certExpiresAt, 60);
   const tierConfig = getTierConfig(partner.tier);
@@ -314,6 +318,37 @@ export function DashboardContent({
                 </div>
               </div>
             </Link>
+          </motion.div>
+        )}
+
+        {/* ── Complete Profile Banner ────────────────────────── */}
+        {!profileComplete && (
+          <motion.div variants={itemVariants}>
+            <Card className="border border-border/50 overflow-hidden" style={{ borderLeftWidth: 4, borderLeftColor: "#F78E25" }}>
+              <CardContent className="!p-4">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <div className="flex items-center justify-center w-10 h-10 rounded-full bg-citro-orange/10 shrink-0">
+                      <UserCog className="h-5 w-5 text-citro-orange" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-text-primary">
+                        Complete Your Profile
+                      </p>
+                      <p className="text-sm text-text-secondary mt-0.5">
+                        Add your business address, warehouse location, and company details to get the most out of your Partner Hub.
+                      </p>
+                    </div>
+                  </div>
+                  <Link href="/profile" className="shrink-0">
+                    <Button variant="default" size="sm" className="gap-1.5">
+                      Complete Profile
+                      <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
           </motion.div>
         )}
 

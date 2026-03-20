@@ -97,12 +97,16 @@ export function InvitePartnerDialog({ open, onOpenChange }: InvitePartnerDialogP
           throw new Error(data.error || "Failed to invite partner");
         }
 
-        toast.success(
-          `Invitation sent to ${data.partner.firstName} ${data.partner.lastName}`,
-          {
-            description: `${data.partner.email} will receive a welcome email with sign-in instructions.`,
-          }
-        );
+        if (data.welcomeEmailSent) {
+          toast.success(
+            `Partner invited successfully! Welcome email sent to ${form.email.trim()}.`
+          );
+        } else {
+          toast.success("Partner invited successfully!");
+          toast.warning(
+            "Welcome email could not be sent. The partner will still receive a Clerk invitation email to set up their password."
+          );
+        }
 
         onOpenChange(false);
         resetForm();

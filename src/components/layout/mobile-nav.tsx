@@ -187,7 +187,7 @@ export function MobileNav({ role, unreadCount = 0 }: MobileNavProps) {
             />
 
             <motion.nav
-              className="fixed top-0 left-0 bottom-0 z-50 w-72 bg-[#0D0D0D] border-r border-white/[0.06] flex flex-col overflow-y-auto"
+              className="fixed top-0 left-0 bottom-0 z-50 w-[280px] max-w-[85vw] bg-[#0D0D0D] border-r border-white/[0.06] flex flex-col overflow-y-auto"
               initial={{ x: "-100%" }}
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}

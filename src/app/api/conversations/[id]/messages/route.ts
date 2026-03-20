@@ -83,16 +83,26 @@ export async function POST(
     ]);
 
     // Send email notification to the other party (non-blocking)
-    const adminEmails = process.env.ADMIN_NOTIFICATION_EMAILS || process.env.ADMIN_EMAIL;
-    if (senderType === "PARTNER" && adminEmails) {
-      const recipients = adminEmails.split(",").map((e: string) => e.trim()).filter(Boolean);
-      if (recipients.length > 0) {
-        sendNewMessageNotification(
-          { subject: conversation.subject },
-          { senderName, body: parsed.data.body },
-          recipients,
-          "Admin",
-        ).catch((err) => console.error("Message notification email failed:", err));
+    const adminEmails =
+      process.env.ADMIN_NOTIFICATION_EMAILS ||
+      process.env.ADMIN_EMAIL ||
+      process.env.RESEND_FROM_EMAIL;
+    if (senderType === "PARTNER") {
+      if (adminEmails) {
+        const recipients = adminEmails.split(",").map((e: string) => e.trim()).filter(Boolean);
+        if (recipients.length > 0) {
+          sendNewMessageNotification(
+            { subject: conversation.subject },
+            { senderName, body: parsed.data.body },
+            recipients,
+            "Admin",
+          ).catch((err) => console.error("Message notification email failed:", err));
+        }
+      } else {
+        console.warn(
+          "[MESSAGES] Partner sent a message but no admin notification emails configured. " +
+          "Set ADMIN_NOTIFICATION_EMAILS in environment variables."
+        );
       }
     } else if (senderType === "ADMIN") {
       sendNewMessageNotification(

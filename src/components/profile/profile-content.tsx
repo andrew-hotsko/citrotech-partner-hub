@@ -526,7 +526,7 @@ export function ProfileContent({ partner }: ProfileContentProps) {
           </CardHeader>
           <CardContent>
             {/* Logo section */}
-            <div className="flex items-center gap-4 mb-6 pb-6 border-b border-border-default">
+            <div className="flex flex-col sm:flex-row items-center sm:items-center gap-4 mb-6 pb-6 border-b border-border-default">
               {currentPartner.logoUrl ? (
                 <img
                   src={currentPartner.logoUrl}
@@ -858,10 +858,10 @@ export function ProfileContent({ partner }: ProfileContentProps) {
                       <button
                         key={method}
                         type="button"
-                        onClick={() => updateField("preferredContact", method)}
+                        onClick={() => updateField("preferredContact", method.toLowerCase())}
                         className={cn(
                           "h-9 px-4 rounded-md border-2 text-sm font-medium transition-all",
-                          fields.preferredContact === method
+                          fields.preferredContact.toLowerCase() === method.toLowerCase()
                             ? "bg-citro-orange border-citro-orange text-white"
                             : "border-border-default bg-primary-bg text-text-primary hover:border-citro-orange/50"
                         )}
@@ -932,7 +932,7 @@ export function ProfileContent({ partner }: ProfileContentProps) {
                 </div>
                 <Field
                   label="Preferred Contact"
-                  value={currentPartner.preferredContact}
+                  value={currentPartner.preferredContact ? currentPartner.preferredContact.charAt(0).toUpperCase() + currentPartner.preferredContact.slice(1) : null}
                 />
                 <Field
                   label="Service Territory"

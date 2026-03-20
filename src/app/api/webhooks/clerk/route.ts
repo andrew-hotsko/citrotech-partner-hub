@@ -70,10 +70,16 @@ export async function POST(req: Request) {
           });
           console.log(`Linked pre-created partner to Clerk user: ${id}`);
 
-          // Send welcome email (only if not already sent during invitation)
-          // Pre-created partners from the invite flow already received a welcome email,
-          // so we skip it here to avoid duplicates. We detect this via the placeholder prefix.
-          if (!preCreated.clerkUserId.startsWith("pending_")) {
+          // For partners pre-created via the invite flow (clerkUserId starts
+          // with "pending_"), a welcome email was already attempted during
+          // invitation. We skip here to avoid duplicates. For partners
+          // pre-created by other means, we send the welcome email now.
+          if (preCreated.clerkUserId.startsWith("pending_")) {
+            console.log(
+              `[WEBHOOK] Skipping welcome email for ${primaryEmail} — already sent during invite flow`
+            );
+          } else {
+            console.log(`[WEBHOOK] Sending welcome email for pre-created partner ${primaryEmail}`);
             await sendWelcomeEmail({
               firstName: linkedPartner.firstName,
               lastName: linkedPartner.lastName,

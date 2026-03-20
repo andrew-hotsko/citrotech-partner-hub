@@ -211,7 +211,7 @@ function CopyOrderNumber({ orderNumber }: { orderNumber: string }) {
     <button
       type="button"
       onClick={handleCopy}
-      className="inline-flex items-center justify-center h-6 w-6 rounded-md text-text-muted hover:text-text-primary hover:bg-secondary-bg transition-colors duration-150 shrink-0"
+      className="inline-flex items-center justify-center h-9 w-9 rounded-md text-text-muted hover:text-text-primary hover:bg-secondary-bg transition-colors duration-150 shrink-0"
       title="Copy order number"
       aria-label={`Copy order number ${orderNumber}`}
     >

@@ -375,7 +375,7 @@ export function ConversationDetail({
 
   return (
     <PageTransition>
-      <div className="flex flex-col h-[calc(100vh-8rem)] sm:h-[calc(100vh-6rem)]">
+      <div className="flex flex-col h-[calc(100dvh-8rem)] sm:h-[calc(100dvh-6rem)]">
         {/* Header */}
         <div className="shrink-0 space-y-3 pb-4 border-b border-border">
           <div className="flex items-center justify-between">
