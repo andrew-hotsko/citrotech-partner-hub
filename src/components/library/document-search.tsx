@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import Link from "next/link";
-import { Search, FolderOpen, ArrowLeft, ChevronRight, X } from "lucide-react";
+import { Search, FolderOpen, ArrowLeft, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { DocumentCard } from "@/components/library/document-card";
@@ -69,18 +69,6 @@ export function DocumentSearch({ documents, categoryName }: DocumentSearchProps)
 
   return (
     <div className="space-y-6">
-      {/* Breadcrumb */}
-      <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm">
-        <Link
-          href="/library"
-          className="text-text-secondary hover:text-text-primary transition-colors"
-        >
-          Library
-        </Link>
-        <ChevronRight className="h-4 w-4 text-text-muted shrink-0" />
-        <span className="text-text-primary font-medium truncate">{categoryName}</span>
-      </nav>
-
       {/* Back link + search row */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-3">
         <Link href="/library">

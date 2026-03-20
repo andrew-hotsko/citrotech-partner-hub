@@ -1,4 +1,6 @@
 import { notFound } from "next/navigation";
+import Link from "next/link";
+import { ChevronRight } from "lucide-react";
 import { db } from "@/lib/db";
 import { requirePartner } from "@/lib/auth";
 import { PageTransition } from "@/components/layout/page-transition";
@@ -65,7 +67,7 @@ export default async function CategoryDetailPage({
   return (
     <PageTransition>
       <div className="space-y-6">
-        {/* Header */}
+        {/* Header with breadcrumb */}
         <div>
           <h1 className="text-2xl font-bold font-display text-text-primary tracking-tight">
             {category.name}
@@ -75,6 +77,16 @@ export default async function CategoryDetailPage({
               {category.description}
             </p>
           )}
+          <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm mt-2">
+            <Link
+              href="/library"
+              className="text-text-secondary hover:text-text-primary transition-colors"
+            >
+              Library
+            </Link>
+            <ChevronRight className="h-4 w-4 text-text-muted shrink-0" />
+            <span className="text-text-primary font-medium truncate">{category.name}</span>
+          </nav>
         </div>
 
         {/* Search & Document List */}
